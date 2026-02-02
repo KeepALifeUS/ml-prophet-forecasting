@@ -2,7 +2,7 @@
 Horizon Performance Monitor
 ML-Framework-1329 - Multi-horizon forecasting performance monitoring
 
-Context7 2025: Real-time monitoring, alerting, performance analytics,
+ 2025: Real-time monitoring, alerting, performance analytics,
 enterprise-grade observability for trading systems.
 """
 

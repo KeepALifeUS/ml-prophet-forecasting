@@ -1,7 +1,7 @@
 """
 Data preprocessing module for Prophet forecasting system.
 
-Enterprise-grade data processing for OHLCV cryptocurrency data with Context7 patterns,
+Enterprise-grade data processing for OHLCV cryptocurrency data with enterprise patterns,
 including feature engineering, data validation, outlier detection, and Prophet format preparation.
 """
 

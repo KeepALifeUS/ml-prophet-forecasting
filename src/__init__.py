@@ -2,7 +2,7 @@
 ML-Framework ML Prophet Forecasting Package
 
 Enterprise-grade Prophet forecasting system for cryptocurrency price predictions.
-Implements Facebook Prophet with Context7 enterprise patterns for production-ready
+Implements Facebook Prophet with enterprise patterns for production-ready
 time series forecasting with advanced features.
 
 Key Features:
@@ -16,7 +16,7 @@ Key Features:
 - Multi-variate forecasting with external regressors
 - Production monitoring and observability
 
-Context7 Integration:
+enterprise integration:
 - Cloud-native architecture with containerized deployment
 - Microservices design with API-first approach
 - Event-driven processing with async/await patterns
@@ -164,8 +164,8 @@ def get_default_forecast_periods(timeframe: str) -> int:
     """
     return DEFAULT_FORECAST_PERIODS.get(timeframe.lower(), 30)
 
-# Настройка для Context7 интеграции
-CONTEXT7_CONFIG = {
+# Настройка для  интеграции
+ENTERPRISE_CONFIG = {
     "service_name": "prophet-forecasting",
     "service_version": __version__,
     "api_prefix": "/api/v1",
@@ -175,15 +175,15 @@ CONTEXT7_CONFIG = {
     "openapi_endpoint": "/openapi.json"
 }
 
-def create_context7_metadata() -> Dict[str, Any]:
+def create__metadata() -> Dict[str, Any]:
     """
-    Создать метаданные для Context7 интеграции
+    Создать метаданные для  интеграции
     
     Returns:
         Словарь с метаданными сервиса
     """
     return {
-        **CONTEXT7_CONFIG,
+        **ENTERPRISE_CONFIG,
         "capabilities": [
             "cryptocurrency_forecasting",
             "multi_timeframe_prediction", 

@@ -1,7 +1,7 @@
 """
 FastAPI REST API for Prophet forecasting system.
 
-Enterprise-grade REST API with Context7 patterns for production deployment,
+Enterprise-grade REST API with enterprise patterns for production deployment,
 including async endpoints, WebSocket support, monitoring, and comprehensive error handling.
 """
 

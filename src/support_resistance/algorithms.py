@@ -2,7 +2,7 @@
 Support/Resistance Detection Algorithms
 ML-Framework-1332 - Multiple detection algorithms for comprehensive level identification
 
-Context7 2025: Advanced technical analysis algorithms with performance optimization
+ 2025: Advanced technical analysis algorithms with performance optimization
 """
 
 import asyncio

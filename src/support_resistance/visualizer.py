@@ -2,7 +2,7 @@
 Level Visualizer for Support/Resistance System
 ML-Framework-1332 - Visualization components for support/resistance levels
 
-Context7 2025: Interactive charts with multiple visualization styles
+ 2025: Interactive charts with multiple visualization styles
 """
 
 import logging

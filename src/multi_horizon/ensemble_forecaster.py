@@ -2,7 +2,7 @@
 Ensemble Forecasting System
 ML-Framework-1329 - Multi-horizon ensemble prediction aggregation
 
-Context7 2025: Adaptive model combination, confidence weighting,
+ 2025: Adaptive model combination, confidence weighting,
 performance-optimized ensemble strategies.
 """
 

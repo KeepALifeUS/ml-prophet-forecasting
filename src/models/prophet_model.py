@@ -1,7 +1,7 @@
 """
 Core Prophet Model Wrapper for Cryptocurrency Forecasting
 
-Enterprise-grade Prophet implementation with Context7 patterns for production-ready
+Enterprise-grade Prophet implementation with enterprise patterns for production-ready
 cryptocurrency price predictions with advanced features and comprehensive error handling.
 """
 

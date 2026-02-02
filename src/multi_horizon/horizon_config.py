@@ -2,7 +2,7 @@
 Horizon Configuration System
 ML-Framework-1329 - Multi-horizon forecasting configuration management
 
-Context7 2025: Adaptive configuration, performance optimization,
+ 2025: Adaptive configuration, performance optimization,
 enterprise-grade parameter management.
 """
 
@@ -150,7 +150,7 @@ class HorizonConfig:
     custom_features: List[str] = field(default_factory=list)
     external_regressors: List[str] = field(default_factory=list)
 
-    # Context7 integration
+    # enterprise integration
     adaptive_config: bool = True             # Enable adaptive configuration
     auto_optimization: bool = True           # Enable auto-optimization
     circuit_breaker: bool = True             # Enable circuit breaker

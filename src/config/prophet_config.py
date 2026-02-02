@@ -1,7 +1,7 @@
 """
 Configuration management for Prophet forecasting system.
 
-Provides comprehensive configuration management using Pydantic with Context7 patterns
+Provides comprehensive configuration management using Pydantic with enterprise patterns
 for enterprise-grade deployment, monitoring, and performance optimization.
 """
 
@@ -376,7 +376,7 @@ class ProphetConfig(BaseSettings):
     """
     Главная конфигурация Prophet forecasting системы
     
-    Объединяет все аспекты конфигурации с Context7 enterprise patterns
+    Объединяет все аспекты конфигурации с enterprise patterns
     """
     
     # === Общие настройки ===

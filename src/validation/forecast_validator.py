@@ -1,7 +1,7 @@
 """
 Comprehensive forecast validation and backtesting framework.
 
-Enterprise-grade validation system for Prophet forecasting models with Context7 patterns,
+Enterprise-grade validation system for Prophet forecasting models with enterprise patterns,
 including time series cross-validation, backtesting, performance analysis, and model comparison.
 """
 

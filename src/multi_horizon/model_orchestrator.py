@@ -2,7 +2,7 @@
 Model Orchestrator System
 ML-Framework-1329 - Multi-horizon model lifecycle management
 
-Context7 2025: Adaptive model selection, health monitoring,
+ 2025: Adaptive model selection, health monitoring,
 performance-optimized model orchestration.
 """
 
@@ -129,7 +129,7 @@ class ModelOrchestrator:
     Orchestrates model lifecycle across multiple horizons.
 
     Manages model creation, training, health monitoring, and optimization
-    with Context7 patterns for enterprise reliability.
+    with enterprise patterns for enterprise reliability.
     """
 
     def __init__(

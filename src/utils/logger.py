@@ -1,7 +1,7 @@
 """
 Structured logging utilities for Prophet Forecasting System
 
-Enterprise-grade logging with Context7 patterns, structured output,
+Enterprise-grade logging with enterprise patterns, structured output,
 and comprehensive observability features for production environments.
 """
 

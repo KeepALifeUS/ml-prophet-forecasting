@@ -2,7 +2,7 @@
 Helper utilities for Prophet forecasting system.
 
 Common utility functions for data validation, formatting, type conversion,
-and other helper operations following Context7 enterprise patterns.
+and other helper operations following enterprise patterns.
 """
 
 import re

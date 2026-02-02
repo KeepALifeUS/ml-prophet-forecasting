@@ -2,7 +2,7 @@
 Utility modules for Prophet Forecasting System
 
 Provides common utilities for logging, metrics calculation, exception handling,
-and other helper functions following Context7 enterprise patterns.
+and other helper functions following enterprise patterns.
 """
 
 from .logger import get_logger

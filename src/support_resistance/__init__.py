@@ -2,7 +2,7 @@
 Support and Resistance Detection System
 ML-Framework-1332 - Enterprise-grade support/resistance level detection
 
-Context7 2025: Advanced technical analysis, multiple detection algorithms,
+ 2025: Advanced technical analysis, multiple detection algorithms,
 performance-optimized with real-time updates and high accuracy.
 
 ## Key Features
@@ -120,4 +120,4 @@ __all__ = [
 
 __version__ = "1.0.0"
 __author__ = "ML-Framework Team"
-__description__ = "Enterprise support/resistance detection with Context7 2025 patterns"
+__description__ = "Enterprise support/resistance detection with  2025 patterns"

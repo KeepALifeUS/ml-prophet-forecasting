@@ -3,7 +3,7 @@ Advanced Prophet Model with Multivariate Features
 
 Enterprise-grade Prophet implementation with advanced features for cryptocurrency
 forecasting, including external regressors, custom seasonality, Bayesian optimization,
-and Context7 patterns for production deployment.
+and enterprise patterns for production deployment.
 """
 
 import asyncio

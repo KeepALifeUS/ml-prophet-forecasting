@@ -2,7 +2,7 @@
 Multi-Horizon Forecasting Engine
 ML-Framework-1329 - Enterprise-grade concurrent prediction orchestration
 
-Context7 2025: Adaptive model selection, performance optimization,
+ 2025: Adaptive model selection, performance optimization,
 sub-100ms targets with fault tolerance.
 """
 
@@ -91,7 +91,7 @@ class MultiHorizonResult:
 
 class MultiHorizonEngine:
     """
-    Enterprise multi-horizon forecasting engine with Context7 patterns.
+    Enterprise multi-horizon forecasting engine with enterprise patterns.
 
     Orchestrates concurrent predictions across multiple time horizons
     with adaptive model selection and performance optimization.

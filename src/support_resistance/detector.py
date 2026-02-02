@@ -2,7 +2,7 @@
 Support and Resistance Detector
 ML-Framework-1332 - Core detection engine for support/resistance levels
 
-Context7 2025: Multi-algorithm detection, adaptive level management,
+ 2025: Multi-algorithm detection, adaptive level management,
 performance-optimized with caching and real-time updates.
 """
 
@@ -138,7 +138,7 @@ class DetectionResult:
 
 class SupportResistanceDetector:
     """
-    Advanced support and resistance level detector with Context7 patterns.
+    Advanced support and resistance level detector with enterprise patterns.
 
     Combines multiple detection algorithms with adaptive level management
     and performance optimization for real-time trading applications.

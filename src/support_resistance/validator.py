@@ -2,7 +2,7 @@
 Level Validator for Support/Resistance System
 ML-Framework-1332 - Validation and backtesting for support/resistance levels
 
-Context7 2025: Statistical validation with backtesting capabilities
+ 2025: Statistical validation with backtesting capabilities
 """
 
 import logging

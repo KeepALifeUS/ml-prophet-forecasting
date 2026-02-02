@@ -2,7 +2,7 @@
 Horizon Performance Optimizer
 ML-Framework-1329 - Multi-horizon forecasting performance optimization
 
-Context7 2025: Adaptive optimization, performance tuning,
+ 2025: Adaptive optimization, performance tuning,
 sub-100ms execution targets with machine learning optimization.
 """
 

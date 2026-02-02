@@ -1,7 +1,7 @@
 """
 Tests for Prophet model wrapper.
 
-Comprehensive test suite for ProphetForecaster class with Context7 patterns,
+Comprehensive test suite for ProphetForecaster class with enterprise patterns,
 including unit tests, integration tests, and performance benchmarks.
 """
 
@@ -74,7 +74,7 @@ def prophet_model(prophet_config):
 
 
 class TestProphetForecaster:
-    """Тесты для класса ProphetForecaster"""
+    """Tests for класса ProphetForecaster"""
     
     def test_initialization(self, prophet_config):
         """Тест инициализации модели"""
@@ -375,7 +375,7 @@ class TestProphetForecaster:
 
 
 class TestForecastResult:
-    """Тесты для класса ForecastResult"""
+    """Tests for класса ForecastResult"""
     
     def test_forecast_result_creation(self):
         """Тест создания ForecastResult"""

@@ -2,7 +2,7 @@
 Validation module for Prophet forecasting system.
 
 Provides comprehensive validation and backtesting capabilities for Prophet models
-with Context7 enterprise patterns for production-ready validation workflows.
+with enterprise patterns for production-ready validation workflows.
 """
 
 from .forecast_validator import (

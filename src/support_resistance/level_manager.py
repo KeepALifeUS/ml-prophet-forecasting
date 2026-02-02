@@ -2,7 +2,7 @@
 Level Manager for Support/Resistance System
 ML-Framework-1332 - Manage, update, and track support/resistance levels
 
-Context7 2025: Adaptive level management with time decay and strength calculation
+ 2025: Adaptive level management with time decay and strength calculation
 """
 
 import logging
@@ -72,7 +72,7 @@ class LevelUpdate:
 
 class LevelManager:
     """
-    Manages support/resistance levels with Context7 patterns.
+    Manages support/resistance levels with enterprise patterns.
 
     Handles level lifecycle, strength calculation, confluence detection,
     and real-time updates.

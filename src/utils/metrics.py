@@ -2,7 +2,7 @@
 Metrics calculation utilities for Prophet forecasting evaluation.
 
 Comprehensive metrics suite for evaluating forecast accuracy, model performance,
-and business impact following Context7 enterprise patterns.
+and business impact following enterprise patterns.
 """
 
 import numpy as np

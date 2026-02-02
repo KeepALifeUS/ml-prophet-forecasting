@@ -1,7 +1,7 @@
 """
 Prophet models module for cryptocurrency forecasting.
 
-Provides both basic and advanced Prophet implementations with Context7 enterprise patterns
+Provides both basic and advanced Prophet implementations with enterprise patterns
 for production-ready cryptocurrency price prediction and analysis.
 """
 

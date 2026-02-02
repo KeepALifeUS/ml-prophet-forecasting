@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ctb3-ml-prophet-forecasting"
 version = "5.0.0"
-description = "Enterprise-grade Prophet Forecasting System for Cryptocurrency Predictions with Context7 patterns"
+description = "Enterprise-grade Prophet Forecasting System for Cryptocurrency Predictions with enterprise patterns"
 authors = [
     {name = "CTB3 Team", email = "team@ctb3.ai"}
 ]
@@ -19,7 +19,7 @@ keywords = [
     "time-series",
     "machine-learning",
     "predictions",
-    "context7",
+    "ml-framework",
     "enterprise"
 ]
 classifiers = [
