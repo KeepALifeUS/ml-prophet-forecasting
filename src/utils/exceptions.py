@@ -11,10 +11,10 @@ from datetime import datetime
 
 class ProphetForecastingException(Exception):
     """
-    Базовое исключение для системы прогнозирования Prophet
+    Base exception for system forecasting Prophet
     
-    Все специфические исключения должны наследоваться от этого класса
-    для обеспечения единообразной обработки ошибок.
+    All specific exceptions must inherit from of this class
+    for ensuring uniform processing errors.
     """
     
     def __init__(
@@ -25,13 +25,13 @@ class ProphetForecastingException(Exception):
         original_exception: Optional[Exception] = None
     ):
         """
-        Инициализация базового исключения
+        Initialization base exceptions
         
         Args:
-            message: Сообщение об ошибке
-            error_code: Код ошибки для программной обработки
-            details: Дополнительные детали ошибки
-            original_exception: Исходное исключение (если есть)
+            message: Message about error
+            error_code: Code errors for software processing
+            details: Additional details errors
+            original_exception: Original exception (if exists)
         """
         super().__init__(message)
         self.message = message
@@ -40,17 +40,17 @@ class ProphetForecastingException(Exception):
         self.original_exception = original_exception
         self.timestamp = datetime.now()
         
-        # Добавляем исходное исключение в детали
+        # Add original exception in details
         if original_exception:
             self.details['original_error'] = str(original_exception)
             self.details['original_type'] = type(original_exception).__name__
     
     def to_dict(self) -> Dict[str, Any]:
         """
-        Конвертация исключения в словарь для JSON сериализации
+        Conversion exceptions in dictionary for JSON serialization
         
         Returns:
-            Словарь с информацией об ошибке
+            Dictionary with information about error
         """
         return {
             'error_type': self.__class__.__name__,
@@ -62,7 +62,7 @@ class ProphetForecastingException(Exception):
         }
     
     def __str__(self) -> str:
-        """Строковое представление ошибки"""
+        """String representation errors"""
         base_msg = f"[{self.error_code}] {self.message}"
         if self.details:
             base_msg += f" | Details: {self.details}"
@@ -71,10 +71,10 @@ class ProphetForecastingException(Exception):
 
 class ModelNotTrainedException(ProphetForecastingException):
     """
-    Исключение для случаев использования необученной модели
+    Exception for cases usage untrained model
     
-    Вызывается когда пытаются выполнить прогнозирование или другие операции
-    с моделью, которая еще не была обучена.
+    Is called when try execute forecasting or other operations
+    with model, which still not was trained.
     """
     
     def __init__(
@@ -92,10 +92,10 @@ class ModelNotTrainedException(ProphetForecastingException):
 
 class InsufficientDataException(ProphetForecastingException):
     """
-    Исключение для случаев недостатка данных
+    Exception for cases shortage data
     
-    Вызывается когда предоставленных данных недостаточно для обучения модели
-    или выполнения других операций.
+    Is called when provided data insufficient for training model
+    or execution other operations.
     """
     
     def __init__(
@@ -122,10 +122,10 @@ class InsufficientDataException(ProphetForecastingException):
 
 class InvalidDataException(ProphetForecastingException):
     """
-    Исключение для некорректных входных данных
+    Exception for incorrect input data
     
-    Вызывается при обнаружении некорректного формата данных, 
-    отсутствии обязательных колонок, некорректных типов данных и т.д.
+    Is called when detection incorrect format data, 
+    absence required columns, incorrect types data and etc.etc.
     """
     
     def __init__(
@@ -149,10 +149,10 @@ class InvalidDataException(ProphetForecastingException):
 
 class ModelTrainingException(ProphetForecastingException):
     """
-    Исключение для ошибок обучения модели
+    Exception for errors training model
     
-    Вызывается при ошибках в процессе обучения модели Prophet,
-    включая проблемы с параметрами, конвергенцией и т.д.
+    Is called when errors in process training model Prophet,
+    including problems with parameters, convergence and etc.etc.
     """
     
     def __init__(
@@ -178,10 +178,10 @@ class ModelTrainingException(ProphetForecastingException):
 
 class PredictionException(ProphetForecastingException):
     """
-    Исключение для ошибок прогнозирования
+    Exception for errors forecasting
     
-    Вызывается при ошибках в процессе создания прогнозов,
-    включая проблемы с входными данными, параметрами прогноза и т.д.
+    Is called when errors in process creation forecasts,
+    including problems with input data, parameters forecast and etc.etc.
     """
     
     def __init__(
@@ -207,10 +207,10 @@ class PredictionException(ProphetForecastingException):
 
 class ConfigurationException(ProphetForecastingException):
     """
-    Исключение для ошибок конфигурации
+    Exception for errors configuration
     
-    Вызывается при некорректных параметрах конфигурации,
-    отсутствии необходимых настроек и т.д.
+    Is called when incorrect parameters configuration,
+    absence required settings and etc.etc.
     """
     
     def __init__(
@@ -234,10 +234,10 @@ class ConfigurationException(ProphetForecastingException):
 
 class DataProcessingException(ProphetForecastingException):
     """
-    Исключение для ошибок обработки данных
+    Exception for errors processing data
     
-    Вызывается при ошибках в preprocessing, feature engineering,
-    загрузке данных с бирж и других операциях с данными.
+    Is called when errors in preprocessing, feature engineering,
+    loading data with exchanges and other operations with data.
     """
     
     def __init__(
@@ -263,10 +263,10 @@ class DataProcessingException(ProphetForecastingException):
 
 class APIException(ProphetForecastingException):
     """
-    Исключение для ошибок API
+    Exception for errors API
     
-    Вызывается при ошибках в REST API endpoints,
-    WebSocket соединениях и других API операциях.
+    Is called when errors in REST API endpoints,
+    WebSocket connections and other API operations.
     """
     
     def __init__(
@@ -293,10 +293,10 @@ class APIException(ProphetForecastingException):
 
 class ValidationException(ProphetForecastingException):
     """
-    Исключение для ошибок валидации прогнозов
+    Exception for errors validation forecasts
     
-    Вызывается при ошибках в кросс-валидации, метриках качества,
-    backtesting и других процедурах валидации.
+    Is called when errors in cross-validation, metrics quality,
+    backtesting and other procedures validation.
     """
     
     def __init__(
@@ -323,10 +323,10 @@ class ValidationException(ProphetForecastingException):
 
 class OptimizationException(ProphetForecastingException):
     """
-    Исключение для ошибок оптимизации гиперпараметров
+    Exception for errors optimization hyperparameters
     
-    Вызывается при ошибках в Bayesian optimization, Grid Search
-    и других методах оптимизации параметров модели.
+    Is called when errors in Bayesian optimization, Grid Search
+    and other methods optimization parameters model.
     """
     
     def __init__(
@@ -350,26 +350,26 @@ class OptimizationException(ProphetForecastingException):
         )
 
 
-# Вспомогательные функции для работы с исключениями
+# Helper function for work with exceptions
 
 def handle_prophet_exception(func):
     """
-    Декоратор для обработки исключений в функциях Prophet
+    Decorator for processing exceptions in functions Prophet
     
-    Автоматически оборачивает стандартные исключения в специализированные
-    исключения системы прогнозирования.
+    Automatically wraps standard exceptions in specialized
+    exceptions system forecasting.
     
     Args:
-        func: Функция для декорирования
+        func: Function for decoration
         
     Returns:
-        Обернутая функция
+        Wrapped function
     """
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except ProphetForecastingException:
-            # Уже наше исключение - просто пропускаем
+            # Already our exception - simply skip
             raise
         except ValueError as e:
             raise InvalidDataException(
@@ -387,7 +387,7 @@ def handle_prophet_exception(func):
                 original_exception=e
             )
         except Exception as e:
-            # Общее исключение для непредвиденных случаев
+            # Total exception for unforeseen cases
             raise ProphetForecastingException(
                 f"Unexpected error in {func.__name__}: {e}",
                 original_exception=e
@@ -398,13 +398,13 @@ def handle_prophet_exception(func):
 
 def create_error_response(exception: ProphetForecastingException) -> Dict[str, Any]:
     """
-    Создание стандартизированного ответа об ошибке для API
+    Creation standardized response about error for API
     
     Args:
-        exception: Исключение системы прогнозирования
+        exception: Exception system forecasting
         
     Returns:
-        Словарь с информацией об ошибке для API ответа
+        Dictionary with information about error for API response
     """
     return {
         "success": False,
@@ -420,12 +420,12 @@ def create_error_response(exception: ProphetForecastingException) -> Dict[str, A
 
 def log_exception(logger, exception: Exception, context: Optional[Dict[str, Any]] = None):
     """
-    Логирование исключения с контекстом
+    Logging exceptions with context
     
     Args:
-        logger: Объект логгера
-        exception: Исключение для логирования
-        context: Дополнительный контекст
+        logger: Object logger
+        exception: Exception for logging
+        context: Additional context
     """
     context = context or {}
     

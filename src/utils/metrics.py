@@ -19,18 +19,18 @@ logger = get_logger(__name__)
 
 
 class MetricType(str, Enum):
-    """Типы метрик для прогнозирования"""
-    ACCURACY = "accuracy"  # Метрики точности
-    DIRECTIONAL = "directional"  # Направленность прогноза
-    BUSINESS = "business"  # Бизнес-метрики
-    STATISTICAL = "statistical"  # Статистические метрики
-    RISK = "risk"  # Метрики риска
+    """Types metrics for forecasting"""
+    ACCURACY = "accuracy"  # Metrics accuracy
+    DIRECTIONAL = "directional"  # Directionality forecast
+    BUSINESS = "business"  # Business-metrics
+    STATISTICAL = "statistical"  # Statistical metrics
+    RISK = "risk"  # Metrics risk
 
 
 @dataclass
 class MetricResult:
     """
-    Результат вычисления метрики
+    Result computations metrics
     """
     name: str
     value: float
@@ -43,7 +43,7 @@ class MetricResult:
     
     @property
     def status(self) -> str:
-        """Статус метрики на основе порогов"""
+        """Status metrics on basis thresholds"""
         if self.threshold_critical is not None:
             if (self.higher_is_better and self.value < self.threshold_critical) or \
                (not self.higher_is_better and self.value > self.threshold_critical):
@@ -57,7 +57,7 @@ class MetricResult:
         return "good"
     
     def to_dict(self) -> Dict[str, Any]:
-        """Конвертация в словарь для сериализации"""
+        """Conversion in dictionary for serialization"""
         return {
             "name": self.name,
             "value": self.value,
@@ -73,33 +73,33 @@ class MetricResult:
 
 class ForecastMetrics:
     """
-    Комплексный класс для вычисления метрик прогнозирования
+    Comprehensive class for computations metrics forecasting
     
-    Поддерживает различные типы метрик:
-    - Точность прогнозов (MAE, RMSE, MAPE)
-    - Направленность (Directional Accuracy)
-    - Бизнес-метрики (ROI, Sharpe Ratio)
-    - Статистические тесты
-    - Метрики риска
+    Supports various types metrics:
+    - Accuracy forecasts (MAE, RMSE, MAPE)
+    - Directionality (Directional Accuracy)
+    - Business-metrics (ROI, Sharpe Ratio)
+    - Statistical tests
+    - Metrics risk
     """
     
     def __init__(self, symbol: str = "unknown", timeframe: str = "1h"):
         """
-        Инициализация калькулятора метрик
+        Initialization calculator metrics
         
         Args:
-            symbol: Символ криптовалюты
-            timeframe: Таймфрейм данных
+            symbol: Symbol cryptocurrency
+            timeframe: Timeframe data
         """
         self.symbol = symbol
         self.timeframe = timeframe
         self.logger = get_logger(f"{__name__}.{symbol}.{timeframe}")
         
-        # Пороги для метрик (можно настраивать)
+        # Thresholds for metrics (possible configure)
         self.thresholds = {
             "mape": {"warning": 10.0, "critical": 20.0},  # %
-            "mae": {"warning": None, "critical": None},    # Зависит от цены
-            "rmse": {"warning": None, "critical": None},   # Зависит от цены
+            "mae": {"warning": None, "critical": None},    # Depends from price
+            "rmse": {"warning": None, "critical": None},   # Depends from price
             "directional_accuracy": {"warning": 55.0, "critical": 50.0},  # %
             "hit_rate": {"warning": 60.0, "critical": 50.0},  # %
         }
@@ -114,39 +114,39 @@ class ForecastMetrics:
         prices: Optional[Union[pd.Series, np.ndarray, List[float]]] = None
     ) -> Dict[str, MetricResult]:
         """
-        Вычисление всех доступных метрик
+        Computation all available metrics
         
         Args:
-            y_true: Фактические значения
-            y_pred: Прогнозные значения
-            timestamps: Временные метки (опционально)
-            confidence_lower: Нижняя граница доверительного интервала
-            confidence_upper: Верхняя граница доверительного интервала
-            prices: Цены для бизнес-метрик (если отличаются от y_true)
+            y_true: Actual values
+            y_pred: Forecast values
+            timestamps: Temporal labels (optionally)
+            confidence_lower: Lower boundary confidence interval
+            confidence_upper: Upper boundary confidence interval
+            prices: Price for business-metrics (if differ from y_true)
             
         Returns:
-            Словарь с результатами всех метрик
+            Dictionary with results all metrics
         """
         try:
-            # Преобразование в numpy arrays
+            # Transformation in numpy arrays
             y_true = self._to_numpy(y_true)
             y_pred = self._to_numpy(y_pred)
             
-            # Валидация входных данных
+            # Validation input data
             self._validate_inputs(y_true, y_pred)
             
             metrics = {}
             
-            # Метрики точности
+            # Metrics accuracy
             accuracy_metrics = self._calculate_accuracy_metrics(y_true, y_pred)
             metrics.update(accuracy_metrics)
             
-            # Направленные метрики
+            # Directed metrics
             if len(y_true) > 1:
                 directional_metrics = self._calculate_directional_metrics(y_true, y_pred)
                 metrics.update(directional_metrics)
             
-            # Метрики доверительных интервалов
+            # Metrics confidence intervals
             if confidence_lower is not None and confidence_upper is not None:
                 confidence_lower = self._to_numpy(confidence_lower)
                 confidence_upper = self._to_numpy(confidence_upper)
@@ -155,11 +155,11 @@ class ForecastMetrics:
                 )
                 metrics.update(interval_metrics)
             
-            # Статистические метрики
+            # Statistical metrics
             statistical_metrics = self._calculate_statistical_metrics(y_true, y_pred)
             metrics.update(statistical_metrics)
             
-            # Бизнес-метрики (если есть данные о ценах)
+            # Business-metrics (if exists data about prices)
             if prices is not None or len(y_true) > 10:
                 business_prices = self._to_numpy(prices) if prices is not None else y_true
                 business_metrics = self._calculate_business_metrics(
@@ -167,7 +167,7 @@ class ForecastMetrics:
                 )
                 metrics.update(business_metrics)
             
-            # Метрики риска
+            # Metrics risk
             risk_metrics = self._calculate_risk_metrics(y_true, y_pred)
             metrics.update(risk_metrics)
             
@@ -188,7 +188,7 @@ class ForecastMetrics:
             raise ValidationException(f"Failed to calculate metrics: {e}")
     
     def _to_numpy(self, data: Union[pd.Series, np.ndarray, List[float]]) -> np.ndarray:
-        """Преобразование данных в numpy array"""
+        """Transformation data in numpy array"""
         if isinstance(data, pd.Series):
             return data.values
         elif isinstance(data, list):
@@ -199,7 +199,7 @@ class ForecastMetrics:
             raise ValueError(f"Unsupported data type: {type(data)}")
     
     def _validate_inputs(self, y_true: np.ndarray, y_pred: np.ndarray):
-        """Валидация входных данных"""
+        """Validation input data"""
         if len(y_true) != len(y_pred):
             raise ValueError(f"Length mismatch: y_true={len(y_true)}, y_pred={len(y_pred)}")
         
@@ -208,7 +208,7 @@ class ForecastMetrics:
         
         if np.any(np.isnan(y_true)) or np.any(np.isnan(y_pred)):
             self.logger.warning("NaN values detected in input data")
-            # Удаление NaN значений
+            # Removal NaN values
             mask = ~(np.isnan(y_true) | np.isnan(y_pred))
             if not np.any(mask):
                 raise ValueError("All values are NaN")
@@ -218,7 +218,7 @@ class ForecastMetrics:
         y_true: np.ndarray, 
         y_pred: np.ndarray
     ) -> Dict[str, MetricResult]:
-        """Вычисление метрик точности"""
+        """Computation metrics accuracy"""
         metrics = {}
         
         # Mean Absolute Error
@@ -306,10 +306,10 @@ class ForecastMetrics:
         y_true: np.ndarray, 
         y_pred: np.ndarray
     ) -> Dict[str, MetricResult]:
-        """Вычисление направленных метрик"""
+        """Computation directed metrics"""
         metrics = {}
         
-        # Направленная точность
+        # Directed accuracy
         true_direction = np.diff(y_true) > 0
         pred_direction = np.diff(y_pred) > 0
         
@@ -326,7 +326,7 @@ class ForecastMetrics:
                 threshold_critical=self.thresholds["directional_accuracy"]["critical"]
             )
             
-            # Hit Rate для положительных движений
+            # Hit Rate for positive movements
             if np.any(true_direction):
                 hit_rate = np.mean(pred_direction[true_direction]) * 100
                 metrics["hit_rate_positive"] = MetricResult(
@@ -338,7 +338,7 @@ class ForecastMetrics:
                     higher_is_better=True
                 )
             
-            # Hit Rate для отрицательных движений
+            # Hit Rate for negative movements
             if np.any(~true_direction):
                 hit_rate_neg = np.mean(~pred_direction[~true_direction]) * 100
                 metrics["hit_rate_negative"] = MetricResult(
@@ -358,10 +358,10 @@ class ForecastMetrics:
         confidence_lower: np.ndarray,
         confidence_upper: np.ndarray
     ) -> Dict[str, MetricResult]:
-        """Вычисление метрик доверительных интервалов"""
+        """Computation metrics confidence intervals"""
         metrics = {}
         
-        # Покрытие доверительного интервала
+        # Coverage confidence interval
         in_interval = (y_true >= confidence_lower) & (y_true <= confidence_upper)
         coverage = np.mean(in_interval) * 100
         
@@ -376,7 +376,7 @@ class ForecastMetrics:
             threshold_critical=60.0
         )
         
-        # Средняя ширина интервала
+        # Average width interval
         interval_width = np.mean(confidence_upper - confidence_lower)
         metrics["mean_interval_width"] = MetricResult(
             name="Mean Interval Width",
@@ -386,7 +386,7 @@ class ForecastMetrics:
             higher_is_better=False
         )
         
-        # Относительная ширина интервала
+        # Relative width interval
         relative_width = np.mean((confidence_upper - confidence_lower) / np.abs(y_true)) * 100
         if np.isfinite(relative_width):
             metrics["relative_interval_width"] = MetricResult(
@@ -405,10 +405,10 @@ class ForecastMetrics:
         y_true: np.ndarray,
         y_pred: np.ndarray
     ) -> Dict[str, MetricResult]:
-        """Вычисление статистических метрик"""
+        """Computation statistical metrics"""
         metrics = {}
         
-        # Корреляция Пирсона
+        # Correlation Pearson
         if len(y_true) > 1:
             correlation = np.corrcoef(y_true, y_pred)[0, 1]
             if np.isfinite(correlation):
@@ -422,17 +422,17 @@ class ForecastMetrics:
                     threshold_critical=0.5
                 )
         
-        # Среднее отклонение (bias)
+        # Average deviation (bias)
         bias = np.mean(y_pred - y_true)
         metrics["bias"] = MetricResult(
             name="Prediction Bias",
             value=bias,
             metric_type=MetricType.STATISTICAL,
             description="Average difference (predicted - actual), positive means overestimation",
-            higher_is_better=False  # Близко к 0 лучше
+            higher_is_better=False  # Close to 0 better
         )
         
-        # Стандартное отклонение ошибок
+        # Standard deviation errors
         residuals = y_pred - y_true
         residuals_std = np.std(residuals)
         metrics["residuals_std"] = MetricResult(
@@ -451,19 +451,19 @@ class ForecastMetrics:
         y_pred: np.ndarray,
         prices: np.ndarray
     ) -> Dict[str, MetricResult]:
-        """Вычисление бизнес-метрик"""
+        """Computation business-metrics"""
         metrics = {}
         
         try:
-            # Доходность при следовании прогнозам
+            # Profitability when following forecasts
             if len(prices) > 1:
                 price_returns = np.diff(prices) / prices[:-1]
                 pred_directions = np.diff(y_pred) > 0
                 
-                # Стратегия: покупка при прогнозе роста, продажа при прогнозе падения
+                # Strategy: purchase when forecast growth, sale when forecast drops
                 strategy_returns = np.where(pred_directions, price_returns, -price_returns)
                 
-                # Совокупная доходность
+                # Aggregate profitability
                 cumulative_return = (1 + strategy_returns).prod() - 1
                 metrics["strategy_return"] = MetricResult(
                     name="Strategy Cumulative Return",
@@ -474,7 +474,7 @@ class ForecastMetrics:
                     higher_is_better=True
                 )
                 
-                # Коэффициент Шарпа (если достаточно данных)
+                # Coefficient Sharpe (if sufficient data)
                 if len(strategy_returns) > 20:
                     if np.std(strategy_returns) > 0:
                         sharpe_ratio = np.mean(strategy_returns) / np.std(strategy_returns) * np.sqrt(252)
@@ -488,7 +488,7 @@ class ForecastMetrics:
                             threshold_critical=0.5
                         )
                 
-                # Максимальная просадка
+                # Maximum drawdown
                 cumulative_returns = np.cumprod(1 + strategy_returns)
                 running_max = np.maximum.accumulate(cumulative_returns)
                 drawdowns = (cumulative_returns - running_max) / running_max
@@ -515,11 +515,11 @@ class ForecastMetrics:
         y_true: np.ndarray,
         y_pred: np.ndarray
     ) -> Dict[str, MetricResult]:
-        """Вычисление метрик риска"""
+        """Computation metrics risk"""
         metrics = {}
         
         try:
-            # Value at Risk (VaR) ошибок прогноза
+            # Value at Risk (VaR) errors forecast
             errors = y_pred - y_true
             var_95 = np.percentile(np.abs(errors), 95)
             metrics["var_95"] = MetricResult(
@@ -530,7 +530,7 @@ class ForecastMetrics:
                 higher_is_better=False
             )
             
-            # Максимальная ошибка
+            # Maximum error
             max_error = np.max(np.abs(errors))
             metrics["max_absolute_error"] = MetricResult(
                 name="Maximum Absolute Error",
@@ -540,7 +540,7 @@ class ForecastMetrics:
                 higher_is_better=False
             )
             
-            # Асимметрия ошибок (склонность к пере-/недооценке)
+            # Asymmetry errors (tendency to re-/underestimation)
             if len(errors) > 3:
                 from scipy.stats import skew
                 error_skewness = skew(errors)
@@ -549,7 +549,7 @@ class ForecastMetrics:
                     value=error_skewness,
                     metric_type=MetricType.STATISTICAL,
                     description="Asymmetry of prediction errors (positive = overestimation bias)",
-                    higher_is_better=False  # Близко к 0 лучше
+                    higher_is_better=False  # Close to 0 better
                 )
         
         except Exception as e:
@@ -562,15 +562,15 @@ class ForecastMetrics:
         metrics: Dict[str, MetricResult]
     ) -> Dict[str, Any]:
         """
-        Создание сводного отчета по метрикам
+        Creation summary report by metrics
         
         Args:
-            metrics: Словарь с вычисленными метриками
+            metrics: Dictionary with computed metrics
             
         Returns:
-            Сводный отчет с анализом
+            Summary report with analysis
         """
-        # Группировка метрик по типам
+        # Grouping metrics by types
         metrics_by_type = {}
         for metric in metrics.values():
             metric_type = metric.metric_type.value
@@ -578,18 +578,18 @@ class ForecastMetrics:
                 metrics_by_type[metric_type] = []
             metrics_by_type[metric_type].append(metric)
         
-        # Анализ статуса
+        # Analysis status
         status_counts = {"good": 0, "warning": 0, "critical": 0}
         for metric in metrics.values():
             status_counts[metric.status] += 1
         
-        # Ключевые метрики для summary
+        # Key metrics for summary
         key_metrics = {}
         for key in ["mape", "directional_accuracy", "correlation", "sharpe_ratio"]:
             if key in metrics:
                 key_metrics[key] = metrics[key].value
         
-        # Общий статус модели
+        # Total status model
         if status_counts["critical"] > 0:
             overall_status = "critical"
         elif status_counts["warning"] > 0:
@@ -615,17 +615,17 @@ class ForecastMetrics:
         self, 
         metrics: Dict[str, MetricResult]
     ) -> List[str]:
-        """Генерация рекомендаций на основе метрик"""
+        """Generation recommendations on basis metrics"""
         recommendations = []
         
-        # Проверка точности
+        # Validation accuracy
         if "mape" in metrics and metrics["mape"].status in ["warning", "critical"]:
             recommendations.append(
                 f"MAPE {metrics['mape'].value:.2f}% indicates low accuracy. "
                 "Consider tuning hyperparameters or adding more features."
             )
         
-        # Проверка направленности
+        # Validation directionality
         if "directional_accuracy" in metrics:
             da = metrics["directional_accuracy"]
             if da.status == "critical":
@@ -639,7 +639,7 @@ class ForecastMetrics:
                     "Model captures trends well."
                 )
         
-        # Проверка бизнес-метрик
+        # Validation business-metrics
         if "sharpe_ratio" in metrics:
             sr = metrics["sharpe_ratio"]
             if sr.value > 1.5:
@@ -653,7 +653,7 @@ class ForecastMetrics:
                     "Risk-adjusted returns are poor."
                 )
         
-        # Общие рекомендации
+        # General recommendations
         if not recommendations:
             recommendations.append("Metrics look good. Continue monitoring model performance.")
         
@@ -668,17 +668,17 @@ def calculate_metrics(
     **kwargs
 ) -> Dict[str, MetricResult]:
     """
-    Удобная функция для быстрого вычисления метрик
+    Convenient function for fast computations metrics
     
     Args:
-        y_true: Фактические значения
-        y_pred: Прогнозные значения 
-        symbol: Символ криптовалюты
-        timeframe: Таймфрейм
-        **kwargs: Дополнительные параметры для ForecastMetrics
+        y_true: Actual values
+        y_pred: Forecast values 
+        symbol: Symbol cryptocurrency
+        timeframe: Timeframe
+        **kwargs: Additional parameters for ForecastMetrics
         
     Returns:
-        Словарь с метриками
+        Dictionary with metrics
     """
     calculator = ForecastMetrics(symbol=symbol, timeframe=timeframe)
     return calculator.calculate_all_metrics(y_true, y_pred, **kwargs)

@@ -29,15 +29,15 @@ from typing import Dict, List, Optional, Union, Any
 import logging
 from datetime import datetime, timedelta
 
-# Версия пакета
+# Version package
 __version__ = "5.0.0"
 __author__ = "ML-Framework Team"
 __license__ = "MIT"
 
-# Настройка логирования
+# Configuration logging
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
-# Core imports для внешнего использования
+# Core imports for outer usage
 try:
     from .models.prophet_model import ProphetForecaster
     from .models.advanced_prophet import AdvancedProphetModel
@@ -75,7 +75,7 @@ try:
     ]
     
 except ImportError as e:
-    # В режиме разработки некоторые модули могут быть недоступны
+    # IN mode development some modules can be unavailable
     import warnings
     warnings.warn(f"Some modules not available during development: {e}")
     
@@ -85,7 +85,7 @@ except ImportError as e:
         "__license__"
     ]
 
-# Константы для системы
+# Constants for system
 SUPPORTED_CRYPTOCURRENCIES = [
     "BTC", "ETH", "BNB", "ADA", "SOL", "XRP", "AVAX", "DOT", "MATIC", "LINK",
     "UNI", "AAVE", "SUSHI", "CRV", "YFI", "COMP", "MKR", "SNX", "1INCH", "ALPHA"
@@ -96,27 +96,27 @@ SUPPORTED_TIMEFRAMES = [
 ]
 
 DEFAULT_FORECAST_PERIODS = {
-    "1m": 60,    # 1 час вперед
-    "5m": 288,   # 1 день вперед  
-    "15m": 96,   # 1 день вперед
-    "30m": 48,   # 1 день вперед
-    "1h": 168,   # 1 неделя вперед
-    "4h": 42,    # 1 неделя вперед
-    "1d": 30,    # 1 месяц вперед
-    "1w": 12,    # 3 месяца вперед
+    "1m": 60,    # 1 hour forward
+    "5m": 288,   # 1 day forward  
+    "15m": 96,   # 1 day forward
+    "30m": 48,   # 1 day forward
+    "1h": 168,   # 1 week forward
+    "4h": 42,    # 1 week forward
+    "1d": 30,    # 1 month forward
+    "1w": 12,    # 3 months forward
 }
 
-# Типы для экспорта
+# Types for export
 ForecastResult = Dict[str, Any]
 ModelParams = Dict[str, Union[str, int, float, bool]]
 TimeSeriesData = Dict[str, Union[datetime, float]]
 
 def get_package_info() -> Dict[str, str]:
     """
-    Получить информацию о пакете
+    Get information about package
     
     Returns:
-        Dict с информацией о версии, авторе, лицензии
+        Dict with information about version, author, license
     """
     return {
         "name": "ml-framework-ml-prophet-forecasting",
@@ -130,41 +130,41 @@ def get_package_info() -> Dict[str, str]:
 
 def validate_cryptocurrency(symbol: str) -> bool:
     """
-    Проверить поддержку криптовалюты
+    Check support cryptocurrency
     
     Args:
-        symbol: Символ криптовалюты (например, "BTC")
+        symbol: Symbol cryptocurrency (for example, "BTC")
         
     Returns:
-        True если поддерживается
+        True if is supported
     """
     return symbol.upper() in SUPPORTED_CRYPTOCURRENCIES
 
 def validate_timeframe(timeframe: str) -> bool:
     """
-    Проверить поддержку таймфрейма
+    Check support timeframe
     
     Args:
-        timeframe: Таймфрейм (например, "1h")
+        timeframe: Timeframe (for example, "1h")
         
     Returns:
-        True если поддерживается
+        True if is supported
     """
     return timeframe.lower() in SUPPORTED_TIMEFRAMES
 
 def get_default_forecast_periods(timeframe: str) -> int:
     """
-    Получить количество периодов прогноза по умолчанию
+    Get number periods forecast by default
     
     Args:
-        timeframe: Таймфрейм
+        timeframe: Timeframe
         
     Returns:
-        Количество периодов для прогноза
+        Number periods for forecast
     """
     return DEFAULT_FORECAST_PERIODS.get(timeframe.lower(), 30)
 
-# Настройка для  интеграции
+# Configuration for  integration
 ENTERPRISE_CONFIG = {
     "service_name": "prophet-forecasting",
     "service_version": __version__,
@@ -177,10 +177,10 @@ ENTERPRISE_CONFIG = {
 
 def create__metadata() -> Dict[str, Any]:
     """
-    Создать метаданные для  интеграции
+    Create metadata for  integration
     
     Returns:
-        Словарь с метаданными сервиса
+        Dictionary with metadata service
     """
     return {
         **ENTERPRISE_CONFIG,

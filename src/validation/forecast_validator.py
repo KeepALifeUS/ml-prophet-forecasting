@@ -30,7 +30,7 @@ logger = get_logger(__name__)
 
 
 class ValidationStrategy(str, Enum):
-    """Стратегии валидации"""
+    """Strategies validation"""
     TIME_SERIES_SPLIT = "time_series_split"
     ROLLING_WINDOW = "rolling_window"
     EXPANDING_WINDOW = "expanding_window"
@@ -41,14 +41,14 @@ class ValidationStrategy(str, Enum):
 @dataclass
 class ValidationConfig:
     """
-    Конфигурация для валидации
+    Configuration for validation
     """
     strategy: ValidationStrategy
     n_splits: int = 5
     test_size_ratio: float = 0.2
     min_train_size: int = 100
     step_size: int = 1
-    gap_size: int = 0  # Разрыв между train и test
+    gap_size: int = 0  # Gap between train and test
     
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -57,7 +57,7 @@ class ValidationConfig:
 @dataclass 
 class BacktestResult:
     """
-    Результат бэктестинга
+    Result backtesting
     """
     symbol: str
     timeframe: str
@@ -95,7 +95,7 @@ class BacktestResult:
 @dataclass
 class ModelComparison:
     """
-    Результат сравнения моделей
+    Result comparison models
     """
     models: List[str]
     comparison_metrics: Dict[str, Dict[str, float]]
@@ -117,16 +117,16 @@ class ModelComparison:
 
 class ForecastValidator(LoggerMixin):
     """
-    Комплексная система валидации прогнозов
+    Comprehensive system validation forecasts
     
-    Основные возможности:
-    - Временные разбиения данных с различными стратегиями
-    - Бэктестинг с реалистичными условиями
-    - Кросс-валидация специально для временных рядов
-    - Статистическое сравнение моделей
-    - Анализ стабильности прогнозов
-    - Детекция переобучения и drift
-    - Визуализация результатов валидации
+    Main capabilities:
+    - Temporal splits data with various strategies
+    - Backtesting with realistic conditions
+    - Cross-validation specifically for temporal series
+    - Statistical comparison models
+    - Analysis stability forecasts
+    - Detection overfitting and drift
+    - Visualization results validation
     """
     
     def __init__(
@@ -136,12 +136,12 @@ class ForecastValidator(LoggerMixin):
         config: Optional[ProphetConfig] = None
     ):
         """
-        Инициализация валидатора
+        Initialization validator
         
         Args:
-            symbol: Символ криптовалюты
-            timeframe: Таймфрейм данных
-            config: Конфигурация системы
+            symbol: Symbol cryptocurrency
+            timeframe: Timeframe data
+            config: Configuration system
         """
         super().__init__()
         
@@ -149,21 +149,21 @@ class ForecastValidator(LoggerMixin):
         self.timeframe = timeframe.lower()
         self.config = config or get_config()
         
-        # Инструменты для анализа
+        # Tools for analysis
         self.metrics_calculator = ForecastMetrics(symbol=symbol, timeframe=timeframe)
         
-        # История валидации
+        # History validation
         self.validation_history: List[BacktestResult] = []
         self.comparison_history: List[ModelComparison] = []
         
-        # Контекст логирования
+        # Context logging
         self.set_log_context(
             symbol=self.symbol,
             timeframe=self.timeframe,
             component="validator"
         )
         
-        self.logger.info(f"Инициализирован ForecastValidator для {self.symbol} ({self.timeframe})")
+        self.logger.info(f"Initialized ForecastValidator for {self.symbol} ({self.timeframe})")
     
     @timed_operation("backtest_model")
     def backtest_model(
@@ -175,20 +175,20 @@ class ForecastValidator(LoggerMixin):
         metrics_list: Optional[List[str]] = None
     ) -> BacktestResult:
         """
-        Выполнение бэктестинга модели
+        Execution backtesting model
         
         Args:
-            model: Модель для тестирования
-            data: Данные для тестирования
-            validation_config: Конфигурация валидации
-            target_column: Целевая колонка
-            metrics_list: Список метрик для вычисления
+            model: Model for testing
+            data: Data for testing
+            validation_config: Configuration validation
+            target_column: Target column
+            metrics_list: List metrics for computations
             
         Returns:
-            Результат бэктестинга
+            Result backtesting
             
         Raises:
-            ValidationException: При ошибке валидации
+            ValidationException: When error validation
         """
         try:
             self.log_operation_start("backtest_model", 
@@ -197,7 +197,7 @@ class ForecastValidator(LoggerMixin):
             
             start_time = datetime.now()
             
-            # Настройки по умолчанию
+            # Settings by default
             if validation_config is None:
                 validation_config = ValidationConfig(
                     strategy=ValidationStrategy.TIME_SERIES_SPLIT,
@@ -208,12 +208,12 @@ class ForecastValidator(LoggerMixin):
             if metrics_list is None:
                 metrics_list = ['mae', 'rmse', 'mape', 'directional_accuracy']
             
-            # Подготовка данных
+            # Preparation data
             if isinstance(data, pd.DataFrame):
-                # Проверка обученности модели или создание временной
+                # Validation trainedness model or creation temporal
                 if not hasattr(model, 'is_trained') or not model.is_trained:
                     self.logger.warning("Model is not trained, training on validation data")
-                    # Используем первые 80% для обучения
+                    # Use first 80% for training
                     train_size = int(len(data) * 0.8)
                     train_data = data.iloc[:train_size]
                     model.train(train_data)
@@ -222,41 +222,41 @@ class ForecastValidator(LoggerMixin):
             else:
                 processed_data = data
             
-            # Создание разбиений
+            # Creation splits
             splits = self._create_validation_splits(
                 processed_data.prophet_df, 
                 validation_config
             )
             
-            # Выполнение валидации по каждому разбиению
+            # Execution validation by each split
             split_results = []
             all_predictions = []
             all_actuals = []
             
             for i, (train_indices, test_indices) in enumerate(splits):
-                self.logger.debug(f"Выполнение разбиения {i+1}/{len(splits)}")
+                self.logger.debug(f"Execution splits {i+1}/{len(splits)}")
                 
-                # Данные для разбиения
+                # Data for splits
                 train_data = processed_data.prophet_df.iloc[train_indices]
                 test_data = processed_data.prophet_df.iloc[test_indices]
                 
-                # Обучение модели на train данных
+                # Training model on train data
                 temp_model = self._create_temp_model(model)
                 temp_model.train(train_data)
                 
-                # Прогноз на test данных
+                # Forecast on test data
                 forecast = temp_model.predict(periods=len(test_data), include_history=False)
                 
-                # Выравнивание данных для сравнения
+                # Alignment data for comparison
                 actual_values = test_data['y'].values
                 predicted_values = forecast['yhat'].values[:len(actual_values)]
                 
-                # Вычисление метрик для разбиения
+                # Computation metrics for splits
                 split_metrics = self.metrics_calculator.calculate_all_metrics(
                     actual_values, predicted_values
                 )
                 
-                # Сохранение результатов разбиения
+                # Saving results splits
                 split_result = {
                     'split_id': i,
                     'train_size': len(train_indices),
@@ -276,12 +276,12 @@ class ForecastValidator(LoggerMixin):
                 all_predictions.extend(predicted_values)
                 all_actuals.extend(actual_values)
             
-            # Общие метрики по всем разбиениям
+            # General metrics by all splits
             overall_metrics = self.metrics_calculator.calculate_all_metrics(
                 all_actuals, all_predictions
             )
             
-            # Создание DataFrame с результатами
+            # Creation DataFrame with results
             predictions_df = pd.DataFrame({
                 'timestamp': range(len(all_predictions)),
                 'predicted': all_predictions,
@@ -296,7 +296,7 @@ class ForecastValidator(LoggerMixin):
             
             execution_time = (datetime.now() - start_time).total_seconds()
             
-            # Создание результата
+            # Creation result
             result = BacktestResult(
                 symbol=self.symbol,
                 timeframe=self.timeframe,
@@ -312,7 +312,7 @@ class ForecastValidator(LoggerMixin):
                 validation_timestamp=datetime.now()
             )
             
-            # Сохранение в историю
+            # Saving in history
             self.validation_history.append(result)
             
             self.log_operation_end("backtest_model", success=True,
@@ -335,7 +335,7 @@ class ForecastValidator(LoggerMixin):
         data: pd.DataFrame, 
         target_column: str
     ) -> ProcessedData:
-        """Подготовка данных для валидации"""
+        """Preparation data for validation"""
         processor = CryptoDataProcessor(
             symbol=self.symbol,
             timeframe=self.timeframe,
@@ -345,7 +345,7 @@ class ForecastValidator(LoggerMixin):
         return processor.process_ohlcv_data(
             data, 
             target_column=target_column,
-            include_features=False  # Для простоты валидации
+            include_features=False  # For simplicity validation
         )
     
     def _create_validation_splits(
@@ -353,16 +353,16 @@ class ForecastValidator(LoggerMixin):
         data: pd.DataFrame, 
         config: ValidationConfig
     ) -> List[Tuple[np.ndarray, np.ndarray]]:
-        """Создание разбиений для валидации"""
+        """Creation splits for validation"""
         n_samples = len(data)
         splits = []
         
         if config.strategy == ValidationStrategy.TIME_SERIES_SPLIT:
-            # Стандартное временное разбиение
+            # Standard temporary split
             test_size = max(int(n_samples * config.test_size_ratio), config.min_train_size)
             train_size = n_samples - test_size
             
-            # Создание нескольких разбиений со сдвигом
+            # Creation several splits with shift
             for i in range(config.n_splits):
                 start_idx = i * (train_size // config.n_splits)
                 end_train = start_idx + train_size
@@ -375,7 +375,7 @@ class ForecastValidator(LoggerMixin):
                     splits.append((train_indices, test_indices))
         
         elif config.strategy == ValidationStrategy.ROLLING_WINDOW:
-            # Скользящее окно
+            # Sliding window
             train_size = max(int(n_samples * (1 - config.test_size_ratio)), config.min_train_size)
             test_size = int(n_samples * config.test_size_ratio)
             
@@ -391,7 +391,7 @@ class ForecastValidator(LoggerMixin):
                     splits.append((train_indices, test_indices))
         
         elif config.strategy == ValidationStrategy.EXPANDING_WINDOW:
-            # Расширяющееся окно
+            # Expanding window
             test_size = int(n_samples * config.test_size_ratio)
             
             for i in range(config.n_splits):
@@ -405,7 +405,7 @@ class ForecastValidator(LoggerMixin):
                     splits.append((train_indices, test_indices))
         
         elif config.strategy == ValidationStrategy.WALK_FORWARD:
-            # Пошаговая валидация
+            # Step-by-step validation
             step_size = max(1, (n_samples - config.min_train_size) // config.n_splits)
             test_size = max(1, int(n_samples * config.test_size_ratio))
             
@@ -420,17 +420,17 @@ class ForecastValidator(LoggerMixin):
                     splits.append((train_indices, test_indices))
         
         elif config.strategy == ValidationStrategy.HOLDOUT:
-            # Простое разделение train/test
+            # Simple separation train/test
             split_point = int(n_samples * (1 - config.test_size_ratio))
             train_indices = np.arange(0, split_point)
             test_indices = np.arange(split_point + config.gap_size, n_samples)
             splits.append((train_indices, test_indices))
         
-        self.logger.debug(f"Создано {len(splits)} разбиений для валидации")
+        self.logger.debug(f"Created {len(splits)} splits for validation")
         return splits
     
     def _create_temp_model(self, original_model: Union[ProphetForecaster, AdvancedProphetModel]):
-        """Создание временной копии модели"""
+        """Creation temporal copies model"""
         if isinstance(original_model, ProphetForecaster):
             return ProphetForecaster(
                 symbol=original_model.symbol,
@@ -458,34 +458,34 @@ class ForecastValidator(LoggerMixin):
         cutoffs: Optional[List[datetime]] = None
     ) -> Dict[str, Any]:
         """
-        Кросс-валидация специально для Prophet
+        Cross-validation specifically for Prophet
         
         Args:
-            model: Prophet модель
-            data: Данные для валидации
-            initial: Начальный период обучения
-            period: Период между cutoffs
-            horizon: Горизонт прогнозирования
-            cutoffs: Конкретные точки разрезов
+            model: Prophet model
+            data: Data for validation
+            initial: Initial period training
+            period: Period between cutoffs
+            horizon: Horizon forecasting
+            cutoffs: Specific points cuts
             
         Returns:
-            Результаты кросс-валидации
+            Results cross-validation
         """
         try:
             self.log_operation_start("cross_validate_prophet",
                                    initial=initial, period=period, horizon=horizon)
             
-            # Подготовка данных
+            # Preparation data
             if isinstance(data, pd.DataFrame):
                 processed_data = self._prepare_data_for_validation(data, "close")
             else:
                 processed_data = data
             
-            # Обучение модели если не обучена
+            # Training model if not trained
             if not hasattr(model, 'is_trained') or not model.is_trained:
                 model.train(processed_data.prophet_df)
             
-            # Получение внутренней Prophet модели
+            # Retrieval inner Prophet model
             if isinstance(model, ProphetForecaster):
                 prophet_model = model.model
             elif isinstance(model, AdvancedProphetModel):
@@ -496,7 +496,7 @@ class ForecastValidator(LoggerMixin):
             if prophet_model is None:
                 raise ModelNotTrainedException("Prophet model not trained")
             
-            # Выполнение кросс-валидации
+            # Execution cross-validation
             cv_results = cross_validation(
                 prophet_model,
                 initial=initial,
@@ -506,10 +506,10 @@ class ForecastValidator(LoggerMixin):
                 parallel="processes"
             )
             
-            # Вычисление метрик производительности
+            # Computation metrics performance
             performance_metrics_df = performance_metrics(cv_results)
             
-            # Агрегирование результатов
+            # Aggregation results
             results = {
                 'cv_results': cv_results,
                 'performance_metrics': performance_metrics_df,
@@ -540,27 +540,27 @@ class ForecastValidator(LoggerMixin):
         validation_config: Optional[ValidationConfig] = None
     ) -> ModelComparison:
         """
-        Сравнение нескольких моделей
+        Comparison several models
         
         Args:
-            models: Словарь моделей {name: model}
-            data: Данные для сравнения
-            validation_config: Конфигурация валидации
+            models: Dictionary models {name: model}
+            data: Data for comparison
+            validation_config: Configuration validation
             
         Returns:
-            Результат сравнения моделей
+            Result comparison models
         """
         try:
-            self.logger.info(f"Сравнение {len(models)} моделей")
+            self.logger.info(f"Comparison {len(models)} models")
             
-            # Результаты бэктестинга для каждой модели
+            # Results backtesting for of each model
             model_results = {}
             for name, model in models.items():
-                self.logger.debug(f"Бэктестинг модели: {name}")
+                self.logger.debug(f"Backtesting model: {name}")
                 result = self.backtest_model(model, data, validation_config)
                 model_results[name] = result
             
-            # Сравнение метрик
+            # Comparison metrics
             comparison_metrics = {}
             for name, result in model_results.items():
                 comparison_metrics[name] = {
@@ -568,7 +568,7 @@ class ForecastValidator(LoggerMixin):
                     for metric_name, metric in result.overall_metrics.items()
                 }
             
-            # Ранжирование моделей (по MAPE, чем меньше - тем лучше)
+            # Ranking models (by MAPE, than less - the better)
             ranking = []
             for name in models.keys():
                 mape = comparison_metrics[name].get('mape', float('inf'))
@@ -577,7 +577,7 @@ class ForecastValidator(LoggerMixin):
             ranking.sort(key=lambda x: x[1])
             best_model = ranking[0][0] if ranking else None
             
-            # Статистические тесты (простая реализация)
+            # Statistical tests (simple implementation)
             statistical_tests = self._perform_statistical_tests(model_results)
             
             comparison = ModelComparison(
@@ -591,7 +591,7 @@ class ForecastValidator(LoggerMixin):
             
             self.comparison_history.append(comparison)
             
-            self.logger.info(f"Лучшая модель: {best_model} (MAPE: {ranking[0][1]:.4f})")
+            self.logger.info(f"Best model: {best_model} (MAPE: {ranking[0][1]:.4f})")
             return comparison
             
         except Exception as e:
@@ -602,28 +602,28 @@ class ForecastValidator(LoggerMixin):
         self, 
         model_results: Dict[str, BacktestResult]
     ) -> Dict[str, Dict[str, Any]]:
-        """Выполнение статистических тестов"""
+        """Execution statistical tests"""
         tests = {}
         
         try:
             from scipy.stats import ttest_rel
             
-            # Парные t-тесты между моделями
+            # Paired t-tests between models
             model_names = list(model_results.keys())
             for i, model1 in enumerate(model_names):
                 for model2 in model_names[i+1:]:
                     test_name = f"{model1}_vs_{model2}"
                     
-                    # Получение ошибок
+                    # Retrieval errors
                     errors1 = model_results[model1].predictions['error'].values
                     errors2 = model_results[model2].predictions['error'].values
                     
-                    # Выравнивание по длине
+                    # Alignment by length
                     min_len = min(len(errors1), len(errors2))
                     errors1 = errors1[:min_len]
                     errors2 = errors2[:min_len]
                     
-                    if len(errors1) > 10:  # Минимум для t-теста
+                    if len(errors1) > 10:  # Minimum for t-test
                         statistic, p_value = ttest_rel(np.abs(errors1), np.abs(errors2))
                         tests[test_name] = {
                             'test_type': 'paired_t_test',
@@ -646,21 +646,21 @@ class ForecastValidator(LoggerMixin):
         noise_level: float = 0.01
     ) -> Dict[str, Any]:
         """
-        Анализ стабильности прогнозов модели
+        Analysis stability forecasts model
         
         Args:
-            model: Модель для анализа
-            data: Данные для анализа
-            n_runs: Количество прогонов
-            noise_level: Уровень шума для тестирования
+            model: Model for analysis
+            data: Data for analysis
+            n_runs: Number runs
+            noise_level: Level noise for testing
             
         Returns:
-            Результаты анализа стабильности
+            Results analysis stability
         """
         try:
-            self.logger.info(f"Анализ стабильности прогнозов ({n_runs} прогонов)")
+            self.logger.info(f"Analysis stability forecasts ({n_runs} runs)")
             
-            # Подготовка данных
+            # Preparation data
             if isinstance(data, pd.DataFrame):
                 processed_data = self._prepare_data_for_validation(data, "close")
             else:
@@ -669,20 +669,20 @@ class ForecastValidator(LoggerMixin):
             forecasts = []
             
             for run in range(n_runs):
-                # Добавление небольшого шума к данным
+                # Addition small noise to data
                 noisy_data = processed_data.prophet_df.copy()
                 noise = np.random.normal(0, noise_level * noisy_data['y'].std(), len(noisy_data))
                 noisy_data['y'] += noise
                 
-                # Создание временной модели
+                # Creation temporal model
                 temp_model = self._create_temp_model(model)
                 temp_model.train(noisy_data)
                 
-                # Прогноз
+                # Forecast
                 forecast = temp_model.predict(periods=30, include_history=False)
                 forecasts.append(forecast['yhat'].values)
             
-            # Анализ стабильности
+            # Analysis stability
             forecasts_array = np.array(forecasts)
             
             stability_metrics = {
@@ -700,7 +700,7 @@ class ForecastValidator(LoggerMixin):
                 }
             }
             
-            self.logger.info(f"Анализ стабильности завершен. Средний CV: {stability_metrics['overall_stability']['mean_cv']:.4f}")
+            self.logger.info(f"Analysis stability completed. Average CV: {stability_metrics['overall_stability']['mean_cv']:.4f}")
             return stability_metrics
             
         except Exception as e:
@@ -713,14 +713,14 @@ class ForecastValidator(LoggerMixin):
         include_plots: bool = True
     ) -> Dict[str, Any]:
         """
-        Создание детального отчета по валидации
+        Creation detailed report by validation
         
         Args:
-            backtest_result: Результат бэктестинга
-            include_plots: Включить графики
+            backtest_result: Result backtesting
+            include_plots: Enable charts
             
         Returns:
-            Детальный отчет
+            Detailed report
         """
         try:
             report = {
@@ -762,11 +762,11 @@ class ForecastValidator(LoggerMixin):
             return {'error': str(e)}
     
     def _analyze_split_consistency(self, result: BacktestResult) -> Dict[str, Any]:
-        """Анализ консистентности между разбиениями"""
+        """Analysis consistency between splits"""
         if len(result.split_metrics) < 2:
             return {'message': 'Insufficient splits for consistency analysis'}
         
-        # Извлечение метрик по разбиениям
+        # Extraction metrics by splits
         metric_names = list(result.split_metrics[0].keys())
         consistency = {}
         
@@ -782,7 +782,7 @@ class ForecastValidator(LoggerMixin):
         return consistency
     
     def _analyze_errors(self, result: BacktestResult) -> Dict[str, Any]:
-        """Анализ ошибок прогнозирования"""
+        """Analysis errors forecasting"""
         errors = result.predictions['error'].values
         
         return {
@@ -801,12 +801,12 @@ class ForecastValidator(LoggerMixin):
         }
     
     def _calculate_skewness(self, data: np.ndarray) -> float:
-        """Вычисление коэффициента асимметрии"""
+        """Computation coefficient asymmetry"""
         try:
             from scipy.stats import skew
             return skew(data)
         except:
-            # Простая реализация
+            # Simple implementation
             mean = np.mean(data)
             std = np.std(data)
             if std == 0:
@@ -814,12 +814,12 @@ class ForecastValidator(LoggerMixin):
             return np.mean(((data - mean) / std) ** 3)
     
     def _calculate_kurtosis(self, data: np.ndarray) -> float:
-        """Вычисление коэффициента эксцесса"""
+        """Computation coefficient kurtosis"""
         try:
             from scipy.stats import kurtosis
             return kurtosis(data)
         except:
-            # Простая реализация
+            # Simple implementation
             mean = np.mean(data)
             std = np.std(data)
             if std == 0:
@@ -827,15 +827,15 @@ class ForecastValidator(LoggerMixin):
             return np.mean(((data - mean) / std) ** 4) - 3
     
     def _analyze_error_trends(self, errors: np.ndarray) -> Dict[str, Any]:
-        """Анализ трендов в ошибках"""
+        """Analysis trends in errors"""
         if len(errors) < 10:
             return {'message': 'Insufficient data for trend analysis'}
         
-        # Корреляция ошибок с временем
+        # Correlation errors with time
         time_indices = np.arange(len(errors))
         correlation = np.corrcoef(time_indices, errors)[0, 1]
         
-        # Автокорреляция
+        # Autocorrelation
         autocorr = np.corrcoef(errors[:-1], errors[1:])[0, 1] if len(errors) > 1 else 0
         
         return {
@@ -845,10 +845,10 @@ class ForecastValidator(LoggerMixin):
         }
     
     def _generate_recommendations(self, result: BacktestResult) -> List[str]:
-        """Генерация рекомендаций на основе результатов"""
+        """Generation recommendations on basis results"""
         recommendations = []
         
-        # Анализ общих метрик
+        # Analysis total metrics
         if 'mape' in result.overall_metrics:
             mape = result.overall_metrics['mape'].value
             if mape > 20:
@@ -863,7 +863,7 @@ class ForecastValidator(LoggerMixin):
             elif da > 70:
                 recommendations.append("Good trend prediction capability detected.")
         
-        # Анализ консистентности
+        # Analysis consistency
         if len(result.split_metrics) > 1:
             mape_values = [split.get('mape', MetricResult('mape', 0, 'accuracy', '', False, False)).value 
                           for split in result.split_metrics]
@@ -872,8 +872,8 @@ class ForecastValidator(LoggerMixin):
             if cv > 0.3:
                 recommendations.append("High variability across validation splits. Model may be unstable.")
         
-        # Рекомендации по времени выполнения
-        if result.execution_time > 300:  # 5 минут
+        # Recommendations by time execution
+        if result.execution_time > 300:  # 5 minutes
             recommendations.append("Long validation time detected. Consider model simplification.")
         
         if not recommendations:
@@ -882,11 +882,11 @@ class ForecastValidator(LoggerMixin):
         return recommendations
     
     def _create_validation_plots(self, result: BacktestResult) -> Dict[str, str]:
-        """Создание графиков валидации"""
+        """Creation charts validation"""
         plots = {}
         
         try:
-            # График предсказаний vs фактических значений
+            # Chart predictions vs actual values
             fig_scatter = go.Figure()
             fig_scatter.add_trace(go.Scatter(
                 x=result.actuals['actual'],
@@ -896,7 +896,7 @@ class ForecastValidator(LoggerMixin):
                 opacity=0.6
             ))
             
-            # Линия идеального предсказания
+            # Line ideal predictions
             min_val = min(result.actuals['actual'].min(), result.predictions['predicted'].min())
             max_val = max(result.actuals['actual'].max(), result.predictions['predicted'].max())
             fig_scatter.add_trace(go.Scatter(
@@ -915,7 +915,7 @@ class ForecastValidator(LoggerMixin):
             
             plots['predictions_scatter'] = fig_scatter.to_html()
             
-            # График ошибок во времени
+            # Chart errors in time
             fig_errors = go.Figure()
             fig_errors.add_trace(go.Scatter(
                 x=result.predictions['timestamp'],
@@ -939,12 +939,12 @@ class ForecastValidator(LoggerMixin):
         return plots
     
     async def backtest_model_async(self, *args, **kwargs) -> BacktestResult:
-        """Асинхронный бэктестинг"""
+        """Asynchronous backtesting"""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.backtest_model, *args, **kwargs)
     
     def get_validation_summary(self) -> Dict[str, Any]:
-        """Сводка по истории валидации"""
+        """Summary by history validation"""
         return {
             'total_validations': len(self.validation_history),
             'total_comparisons': len(self.comparison_history),

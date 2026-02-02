@@ -18,7 +18,7 @@ from structlog.types import Processor
 
 
 class LogLevel(str, Enum):
-    """Уровни логирования"""
+    """Levels logging"""
     DEBUG = "DEBUG"
     INFO = "INFO" 
     WARNING = "WARNING"
@@ -27,13 +27,13 @@ class LogLevel(str, Enum):
 
 
 class LogFormat(str, Enum):
-    """Форматы логирования"""
+    """Formats logging"""
     JSON = "json"
     TEXT = "text"
     COLORED = "colored"
 
 
-# Глобальная конфигурация логирования
+# Global configuration logging
 _logging_configured = False
 _log_level = LogLevel.INFO
 _log_format = LogFormat.JSON
@@ -48,15 +48,15 @@ def configure_logging(
     environment: str = "development"
 ) -> None:
     """
-    Конфигурация структурированного логирования для всего приложения
+    Configuration structured logging for total application
     
     Args:
-        level: Уровень логирования
-        format_type: Формат вывода логов
-        log_file: Путь к файлу логов (опционально)
-        service_name: Имя сервиса
-        service_version: Версия сервиса
-        environment: Среда выполнения
+        level: Level logging
+        format_type: Format output logs
+        log_file: Path to file logs (optionally)
+        service_name: Name service
+        service_version: Version service
+        environment: Environment execution
     """
     global _logging_configured, _log_level, _log_format
     
@@ -66,18 +66,18 @@ def configure_logging(
     _log_level = level
     _log_format = format_type
     
-    # Процессоры для структурирования логов
+    # Processors for structuring logs
     processors = [
-        # Добавление timestamp
+        # Addition timestamp
         structlog.processors.TimeStamper(fmt="ISO"),
         
-        # Добавление уровня лога
+        # Addition level log
         structlog.stdlib.add_log_level,
         
-        # Добавление информации о логгере
+        # Addition information about logger
         structlog.stdlib.add_logger_name,
         
-        # Добавление контекста сервиса
+        # Addition context service
         structlog.processors.CallsiteParameterAdder(
             parameters=[
                 structlog.processors.CallsiteParameter.FILENAME,
@@ -86,14 +86,14 @@ def configure_logging(
             ]
         ),
         
-        # Обработка исключений
+        # Processing exceptions
         structlog.processors.format_exc_info,
         
-        # Кастомный процессор для добавления метаданных сервиса
+        # Custom processor for additions metadata service
         _add_service_context(service_name, service_version, environment),
     ]
     
-    # Выбор финального процессора на основе формата
+    # Selection final processor on basis format
     if format_type == LogFormat.JSON:
         processors.append(structlog.processors.JSONRenderer())
     elif format_type == LogFormat.COLORED:
@@ -107,7 +107,7 @@ def configure_logging(
             )
         )
     
-    # Конфигурация structlog
+    # Configuration structlog
     structlog.configure(
         processors=processors,
         wrapper_class=structlog.stdlib.BoundLogger,
@@ -116,14 +116,14 @@ def configure_logging(
         cache_logger_on_first_use=True,
     )
     
-    # Конфигурация стандартного logging
+    # Configuration standard logging
     logging.basicConfig(
         format="%(message)s",
         stream=sys.stdout,
         level=getattr(logging, level.value)
     )
     
-    # Настройка файлового логирования
+    # Configuration file logging
     if log_file:
         log_file = Path(log_file)
         log_file.parent.mkdir(parents=True, exist_ok=True)
@@ -131,17 +131,17 @@ def configure_logging(
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(getattr(logging, level.value))
         
-        # Для файла всегда используем JSON формат
+        # For file always use JSON format
         file_formatter = structlog.stdlib.ProcessorFormatter(
             processor=structlog.processors.JSONRenderer(),
         )
         file_handler.setFormatter(file_formatter)
         
-        # Добавление к root logger
+        # Addition to root logger
         root_logger = logging.getLogger()
         root_logger.addHandler(file_handler)
     
-    # Подавление избыточных логов от сторонних библиотек
+    # Suppression redundant logs from third-party libraries
     _suppress_noisy_loggers()
     
     _logging_configured = True
@@ -153,15 +153,15 @@ def _add_service_context(
     environment: str
 ) -> Processor:
     """
-    Создание процессора для добавления контекста сервиса
+    Creation processor for additions context service
     
     Args:
-        service_name: Имя сервиса
-        service_version: Версия сервиса
-        environment: Среда выполнения
+        service_name: Name service
+        service_version: Version service
+        environment: Environment execution
         
     Returns:
-        Процессор structlog
+        Processor structlog
     """
     def processor(logger, method_name, event_dict):
         event_dict.update({
@@ -176,7 +176,7 @@ def _add_service_context(
 
 
 def _suppress_noisy_loggers():
-    """Подавление избыточного логирования от сторонних библиотек"""
+    """Suppression excessive logging from third-party libraries"""
     noisy_loggers = [
         'urllib3.connectionpool',
         'requests.packages.urllib3.connectionpool',
@@ -193,19 +193,19 @@ def _suppress_noisy_loggers():
 
 def get_logger(name: Optional[str] = None) -> structlog.BoundLogger:
     """
-    Получение настроенного структурированного логгера
+    Retrieval configured structured logger
     
     Args:
-        name: Имя логгера (опционально, по умолчанию __name__ caller'а)
+        name: Name logger (optionally, by default __name__ caller'and)
         
     Returns:
-        Настроенный структурированный логгер
+        Configured structured logger
     """
-    # Автоконфигурация при первом использовании
+    # Auto-configuration when first usage
     if not _logging_configured:
         configure_logging()
     
-    # Получение имени из caller'а если не указано
+    # Retrieval name from caller'and if not specified
     if name is None:
         import inspect
         frame = inspect.currentframe().f_back
@@ -220,15 +220,15 @@ def get_request_logger(
     endpoint: Optional[str] = None
 ) -> structlog.BoundLogger:
     """
-    Получение логгера с контекстом HTTP запроса
+    Retrieval logger with context HTTP request
     
     Args:
-        request_id: ID запроса для трейсинга
-        user_id: ID пользователя (если есть)
-        endpoint: Эндпоинт API
+        request_id: ID request for tracing
+        user_id: ID user (if exists)
+        endpoint: Endpoint API
         
     Returns:
-        Логгер с привязанным контекстом запроса
+        Logger with bound context request
     """
     logger = get_logger("api")
     
@@ -250,16 +250,16 @@ def get_model_logger(
     operation: Optional[str] = None
 ) -> structlog.BoundLogger:
     """
-    Получение логгера с контекстом модели
+    Retrieval logger with context model
     
     Args:
-        symbol: Символ криптовалюты
-        timeframe: Таймфрейм
-        model_version: Версия модели
-        operation: Текущая операция (train, predict, validate)
+        symbol: Symbol cryptocurrency
+        timeframe: Timeframe
+        model_version: Version model
+        operation: Current operation (train, predict, validate)
         
     Returns:
-        Логгер с привязанным контекстом модели
+        Logger with bound context model
     """
     logger = get_logger("model")
     
@@ -284,14 +284,14 @@ def log_performance_metrics(
     additional_metrics: Optional[Dict[str, Any]] = None
 ):
     """
-    Логирование метрик производительности
+    Logging metrics performance
     
     Args:
-        logger: Логгер для записи
-        operation: Название операции
-        duration_seconds: Длительность в секундах
-        success: Успешность операции
-        additional_metrics: Дополнительные метрики
+        logger: Logger for records
+        operation: Name operations
+        duration_seconds: Duration in seconds
+        success: Success rate operations
+        additional_metrics: Additional metrics
     """
     metrics = {
         'operation': operation,
@@ -318,15 +318,15 @@ def log_forecast_metrics(
     metrics: Dict[str, float]
 ):
     """
-    Логирование метрик прогнозирования
+    Logging metrics forecasting
     
     Args:
-        logger: Логгер для записи
-        symbol: Символ криптовалюты
-        timeframe: Таймфрейм
-        forecast_points: Количество точек прогноза
-        training_samples: Количество образцов для обучения
-        metrics: Метрики качества модели
+        logger: Logger for records
+        symbol: Symbol cryptocurrency
+        timeframe: Timeframe
+        forecast_points: Number points forecast
+        training_samples: Number samples for training
+        metrics: Metrics quality model
     """
     log_data = {
         'symbol': symbol,
@@ -350,16 +350,16 @@ def log_model_training(
     validation_metrics: Optional[Dict[str, float]] = None
 ):
     """
-    Логирование процесса обучения модели
+    Logging process training model
     
     Args:
-        logger: Логгер для записи
-        symbol: Символ криптовалюты
-        timeframe: Таймфрейм
-        training_duration: Длительность обучения
-        samples_count: Количество образцов
-        model_params: Параметры модели
-        validation_metrics: Метрики валидации
+        logger: Logger for records
+        symbol: Symbol cryptocurrency
+        timeframe: Timeframe
+        training_duration: Duration training
+        samples_count: Number samples
+        model_params: Parameters model
+        validation_metrics: Metrics validation
     """
     log_data = {
         'symbol': symbol,
@@ -378,10 +378,10 @@ def log_model_training(
 
 class LoggerMixin:
     """
-    Mixin класс для добавления логирования в другие классы
+    Mixin class for additions logging in other classes
     
-    Предоставляет удобный интерфейс для логирования в методах класса
-    с автоматическим контекстом класса.
+    Provides convenient interface for logging in methods class
+    with automatic context class.
     """
     
     def __init__(self, *args, **kwargs):
@@ -391,7 +391,7 @@ class LoggerMixin:
     
     @property
     def logger(self) -> structlog.BoundLogger:
-        """Получение логгера для класса"""
+        """Retrieval logger for class"""
         if self._logger is None:
             class_name = self.__class__.__name__
             module_name = self.__class__.__module__
@@ -399,7 +399,7 @@ class LoggerMixin:
             
             base_logger = get_logger(logger_name)
             
-            # Добавление контекста класса
+            # Addition context class
             context = {
                 'class': class_name,
                 **self._log_context
@@ -411,28 +411,28 @@ class LoggerMixin:
     
     def set_log_context(self, **kwargs):
         """
-        Установка дополнительного контекста для логирования
+        Installation additional context for logging
         
         Args:
-            **kwargs: Контекстные переменные
+            **kwargs: Contextual variables
         """
         self._log_context.update(kwargs)
-        # Сброс логгера для пересоздания с новым контекстом
+        # Reset logger for recreation with new context
         self._logger = None
     
     def log_operation_start(self, operation: str, **kwargs):
-        """Логирование начала операции"""
+        """Logging beginning operations"""
         self.logger.info(f"Starting {operation}", operation=operation, **kwargs)
     
     def log_operation_end(self, operation: str, success: bool = True, **kwargs):
-        """Логирование завершения операции"""
+        """Logging completion operations"""
         if success:
             self.logger.info(f"Completed {operation}", operation=operation, success=success, **kwargs)
         else:
             self.logger.error(f"Failed {operation}", operation=operation, success=success, **kwargs)
 
 
-# Декораторы для автоматического логирования
+# Decorators for automatic logging
 
 def log_function_calls(
     include_args: bool = False,
@@ -440,15 +440,15 @@ def log_function_calls(
     log_level: LogLevel = LogLevel.DEBUG
 ):
     """
-    Декоратор для автоматического логирования вызовов функций
+    Decorator for automatic logging calls functions
     
     Args:
-        include_args: Включать аргументы в лог
-        include_result: Включать результат в лог
-        log_level: Уровень логирования
+        include_args: Include arguments in log
+        include_result: Include result in log
+        log_level: Level logging
         
     Returns:
-        Декоратор функции
+        Decorator function
     """
     def decorator(func):
         def wrapper(*args, **kwargs):
@@ -463,13 +463,13 @@ def log_function_calls(
                 log_data['args'] = args
                 log_data['kwargs'] = kwargs
             
-            # Логирование начала
+            # Logging beginning
             getattr(logger, log_level.value.lower())(f"Calling {func.__name__}", **log_data)
             
             try:
                 result = func(*args, **kwargs)
                 
-                # Логирование успеха
+                # Logging success
                 success_data = log_data.copy()
                 if include_result:
                     success_data['result'] = result
@@ -479,7 +479,7 @@ def log_function_calls(
                 return result
                 
             except Exception as e:
-                # Логирование ошибки
+                # Logging errors
                 error_data = log_data.copy()
                 error_data.update({
                     'error': str(e),
@@ -495,13 +495,13 @@ def log_function_calls(
 
 def timed_operation(operation_name: Optional[str] = None):
     """
-    Декоратор для измерения времени выполнения операций
+    Decorator for measurements time execution operations
     
     Args:
-        operation_name: Имя операции (по умолчанию имя функции)
+        operation_name: Name operations (by default name function)
         
     Returns:
-        Декоратор функции
+        Decorator function
     """
     def decorator(func):
         def wrapper(*args, **kwargs):

@@ -32,7 +32,7 @@ from ..utils.exceptions import (
     PredictionException
 )
 
-# Подавить предупреждения Prophet
+# Suppress warnings Prophet
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", message=".*cmdstanpy.*")
 
@@ -42,7 +42,7 @@ logger = get_logger(__name__)
 @dataclass
 class ForecastResult:
     """
-    Результат прогнозирования с полной информацией
+    Result forecasting with full information
     """
     symbol: str
     timeframe: str
@@ -56,7 +56,7 @@ class ForecastResult:
     model_version: str
     
     def to_dict(self) -> Dict[str, Any]:
-        """Конвертация в словарь для JSON serialization"""
+        """Conversion in dictionary for JSON serialization"""
         return {
             "symbol": self.symbol,
             "timeframe": self.timeframe,
@@ -73,17 +73,17 @@ class ForecastResult:
 
 class ProphetForecaster:
     """
-    Enterprise Prophet модель для прогнозирования цен криптовалют
+    Enterprise Prophet model for forecasting prices cryptocurrencies
     
-    Основные возможности:
-    - Поддержка множественных криптовалют и таймфреймов
-    - Автоматическая детекция сезонности
-    - Учет праздников и событий
-    - Детекция точек изменения тренда
-    - Кросс-валидация и метрики качества
-    - Интервалы неопределенности
-    - Сохранение и загрузка моделей
-    - Асинхронные операции
+    Main capabilities:
+    - Support multiple cryptocurrencies and timeframes
+    - Automatic detection seasonality
+    - Accounting holidays and events
+    - Detection points changes trend
+    - Cross-validation and metrics quality
+    - Intervals uncertainty
+    - Saving and loading models
+    - Asynchronous operations
     """
     
     def __init__(
@@ -94,36 +94,36 @@ class ProphetForecaster:
         model_config: Optional[ModelConfig] = None
     ):
         """
-        Инициализация Prophet модели
+        Initialization Prophet model
         
         Args:
-            symbol: Символ криптовалюты (например, "BTC")
-            timeframe: Таймфрейм данных (например, "1h", "4h", "1d")
-            config: Общая конфигурация системы
-            model_config: Специфическая конфигурация модели
+            symbol: Symbol cryptocurrency (for example, "BTC")
+            timeframe: Timeframe data (for example, "1h", "4h", "1d")
+            config: Total configuration system
+            model_config: Specific configuration model
         """
         self.symbol = symbol.upper()
         self.timeframe = timeframe.lower()
         self.config = config or get_config()
         self.model_config = model_config or self.config.get_model_config_for_crypto(symbol)
         
-        # Состояние модели
+        # State model
         self.model: Optional[Prophet] = None
         self.is_trained = False
         self.training_data: Optional[pd.DataFrame] = None
         self.last_training_time: Optional[datetime] = None
         self.model_version = "5.0.0"
         
-        # Метрики и результаты
+        # Metrics and results
         self.training_metrics: Dict[str, float] = {}
         self.cv_results: Optional[pd.DataFrame] = None
         self.feature_importance: Dict[str, float] = {}
         
-        # Логгер
+        # Logger
         self.logger = get_logger(f"{__name__}.{self.symbol}.{self.timeframe}")
         
         self.logger.info(
-            f"Инициализирован ProphetForecaster для {self.symbol} ({self.timeframe})",
+            f"Initialized ProphetForecaster for {self.symbol} ({self.timeframe})",
             extra={
                 "symbol": self.symbol,
                 "timeframe": self.timeframe,
@@ -133,13 +133,13 @@ class ProphetForecaster:
     
     def _create_prophet_model(self) -> Prophet:
         """
-        Создать экземпляр Prophet с настройками из конфигурации
+        Create instance Prophet with settings from configuration
         
         Returns:
-            Настроенный экземпляр Prophet
+            Configured instance Prophet
         """
         try:
-            # Основные параметры
+            # Main parameters
             prophet_params = {
                 'growth': self.model_config.growth.value,
                 'seasonality_mode': self.model_config.seasonality_mode.value,
@@ -155,10 +155,10 @@ class ProphetForecaster:
                 'uncertainty_samples': self.model_config.uncertainty_samples
             }
             
-            # Создание модели
+            # Creation model
             model = Prophet(**prophet_params)
             
-            # Добавление кастомной сезонности
+            # Addition custom seasonality
             for seasonality in self.model_config.custom_seasonalities:
                 model.add_seasonality(
                     name=seasonality['name'],
@@ -167,22 +167,22 @@ class ProphetForecaster:
                     mode=seasonality.get('mode', 'additive')
                 )
             
-            # Добавление регрессоров (будут добавлены при наличии в данных)
+            # Addition regressors (will be added when presence in data)
             for regressor in self.model_config.additional_regressors:
                 try:
                     model.add_regressor(regressor)
                 except Exception as e:
-                    self.logger.warning(f"Не удалось добавить регрессор {regressor}: {e}")
+                    self.logger.warning(f"Not succeeded add regressor {regressor}: {e}")
             
-            self.logger.info(f"Создана Prophet модель с параметрами: {prophet_params}")
+            self.logger.info(f"Created Prophet model with parameters: {prophet_params}")
             return model
             
         except Exception as e:
-            self.logger.error(f"Ошибка создания Prophet модели: {e}")
-            raise ModelTrainingException(f"Не удалось создать Prophet модель: {e}")
+            self.logger.error(f"Error creation Prophet model: {e}")
+            raise ModelTrainingException(f"Not succeeded create Prophet model: {e}")
     
     def _convert_seasonality(self, value: Union[bool, str, int]) -> Union[bool, int]:
-        """Конвертация параметров сезонности"""
+        """Conversion parameters seasonality"""
         if isinstance(value, str) and value == "auto":
             return "auto"
         if isinstance(value, bool):
@@ -193,73 +193,73 @@ class ProphetForecaster:
     
     def _validate_training_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Валидация и подготовка данных для обучения
+        Validation and preparation data for training
         
         Args:
-            df: DataFrame с данными (должен содержать 'ds' и 'y')
+            df: DataFrame with data (must contain 'ds' and 'y')
             
         Returns:
-            Валидированный DataFrame
+            Validated DataFrame
             
         Raises:
-            InvalidDataException: При некорректных данных
+            InvalidDataException: When incorrect data
         """
         try:
-            # Проверка наличия обязательных колонок
+            # Validation presence required columns
             required_cols = ['ds', 'y']
             missing_cols = [col for col in required_cols if col not in df.columns]
             if missing_cols:
-                raise InvalidDataException(f"Отсутствуют обязательные колонки: {missing_cols}")
+                raise InvalidDataException(f"Absent required columns: {missing_cols}")
             
-            # Проверка количества записей
+            # Validation number entries
             min_records = max(2 * self.model_config.n_changepoints, 100)
             if len(df) < min_records:
                 raise InsufficientDataException(
-                    f"Недостаточно данных для обучения: {len(df)} < {min_records}"
+                    f"Insufficient data for training: {len(df)} < {min_records}"
                 )
             
-            # Конвертация типов
+            # Conversion types
             df = df.copy()
             df['ds'] = pd.to_datetime(df['ds'])
             df['y'] = pd.to_numeric(df['y'], errors='coerce')
             
-            # Удаление NaN значений
+            # Removal NaN values
             initial_rows = len(df)
             df = df.dropna(subset=['ds', 'y'])
             if len(df) < initial_rows * 0.8:
-                self.logger.warning(f"Удалено {initial_rows - len(df)} строк с NaN значениями")
+                self.logger.warning(f"Removed {initial_rows - len(df)} strings with NaN values")
             
-            # Проверка на дубликаты по времени
+            # Validation on duplicates by time
             if df['ds'].duplicated().any():
-                self.logger.warning("Найдены дубликаты по времени, группируем по среднему")
+                self.logger.warning("Found duplicates by time, group by average")
                 df = df.groupby('ds').agg({
                     'y': 'mean',
                     **{col: 'mean' for col in df.columns if col not in ['ds', 'y']}
                 }).reset_index()
             
-            # Сортировка по времени
+            # Sorting by time
             df = df.sort_values('ds').reset_index(drop=True)
             
-            # Проверка на положительные значения для logistic growth
+            # Validation on positive values for logistic growth
             if self.model_config.growth.value == 'logistic':
                 if (df['y'] <= 0).any():
-                    self.logger.warning("Найдены неположительные значения для logistic growth")
+                    self.logger.warning("Found non-positive values for logistic growth")
                     df = df[df['y'] > 0]
                 
-                # Добавление cap для logistic growth
+                # Addition cap for logistic growth
                 df['cap'] = df['y'].max() * 1.2
                 df['floor'] = df['y'].min() * 0.8
             
             self.logger.info(
-                f"Данные валидированы: {len(df)} записей, "
-                f"период с {df['ds'].min()} по {df['ds'].max()}"
+                f"Data validated: {len(df)} entries, "
+                f"period with {df['ds'].min()} by {df['ds'].max()}"
             )
             
             return df
             
         except Exception as e:
-            self.logger.error(f"Ошибка валидации данных: {e}")
-            raise InvalidDataException(f"Некорректные данные для обучения: {e}")
+            self.logger.error(f"Error validation data: {e}")
+            raise InvalidDataException(f"Incorrect data for training: {e}")
     
     def train(
         self, 
@@ -269,102 +269,102 @@ class ProphetForecaster:
         validate: bool = True
     ) -> Dict[str, Any]:
         """
-        Обучение Prophet модели
+        Training Prophet model
         
         Args:
-            data: Данные для обучения с колонками 'ds' (время) и 'y' (цена)
-            holidays: DataFrame с праздниками (опционально)
-            regressors_data: Дополнительные регрессоры
-            validate: Выполнить кросс-валидацию после обучения
+            data: Data for training with columns 'ds' (time) and 'y' (price)
+            holidays: DataFrame with holidays (optionally)
+            regressors_data: Additional regressors
+            validate: Execute cross-validation after training
             
         Returns:
-            Словарь с метриками обучения
+            Dictionary with metrics training
             
         Raises:
-            ModelTrainingException: При ошибке обучения
+            ModelTrainingException: When error training
         """
         try:
-            self.logger.info(f"Начало обучения модели для {self.symbol} ({self.timeframe})")
+            self.logger.info(f"Start training model for {self.symbol} ({self.timeframe})")
             
-            # Валидация данных
+            # Validation data
             validated_data = self._validate_training_data(data)
             
-            # Добавление регрессоров к данным
+            # Addition regressors to data
             if regressors_data:
                 for regressor_name, regressor_values in regressors_data.items():
                     if regressor_name in self.model_config.additional_regressors:
                         validated_data[regressor_name] = regressor_values
             
-            # Создание модели
+            # Creation model
             self.model = self._create_prophet_model()
             
-            # Добавление праздников
+            # Addition holidays
             if holidays is not None:
                 self.model.holidays = holidays
             
-            # Обучение
+            # Training
             training_start = datetime.now()
             self.model.fit(validated_data)
             training_time = (datetime.now() - training_start).total_seconds()
             
-            # Сохранение состояния
+            # Saving state
             self.is_trained = True
             self.training_data = validated_data
             self.last_training_time = datetime.now()
             
-            # Базовые метрики
+            # Base metrics
             self.training_metrics = {
                 'training_time_seconds': training_time,
                 'training_samples': len(validated_data),
                 'training_period_days': (validated_data['ds'].max() - validated_data['ds'].min()).days,
-                'mean_absolute_error_training': 0.0,  # Будет вычислено при валидации
+                'mean_absolute_error_training': 0.0,  # Will be computed when validation
                 'mean_squared_error_training': 0.0,
                 'r2_score_training': 0.0
             }
             
-            # Кросс-валидация
-            if validate and len(validated_data) > 200:  # Только для достаточного объема данных
+            # Cross-validation
+            if validate and len(validated_data) > 200:  # Only for sufficient volume data
                 try:
                     cv_results = self._perform_cross_validation(validated_data)
                     self.training_metrics.update(cv_results)
                 except Exception as e:
-                    self.logger.warning(f"Кросс-валидация не выполнена: {e}")
+                    self.logger.warning(f"Cross-validation not completed: {e}")
             
             self.logger.info(
-                f"Обучение завершено за {training_time:.2f}с, "
-                f"размер данных: {len(validated_data)} записей",
+                f"Training completed for {training_time:.2f}with, "
+                f"size data: {len(validated_data)} entries",
                 extra={"metrics": self.training_metrics}
             )
             
             return self.training_metrics
             
         except Exception as e:
-            self.logger.error(f"Ошибка обучения модели: {e}")
-            raise ModelTrainingException(f"Не удалось обучить модель: {e}")
+            self.logger.error(f"Error training model: {e}")
+            raise ModelTrainingException(f"Not succeeded train model: {e}")
     
     def _perform_cross_validation(self, data: pd.DataFrame) -> Dict[str, float]:
         """
-        Выполнение кросс-валидации модели
+        Execution cross-validation model
         
         Args:
-            data: Данные для валидации
+            data: Data for validation
             
         Returns:
-            Метрики кросс-валидации
+            Metrics cross-validation
         """
         try:
-            # Параметры кросс-валидации
-            initial_days = len(data) * 0.7  # 70% для initial
-            period_days = max(1, len(data) * 0.1)  # 10% для period
-            horizon_days = max(1, len(data) * 0.2)  # 20% для horizon
+            # Parameters cross-validation
+            initial_days = len(data) * 0.7  # 70% for initial
+            period_days = max(1, len(data) * 0.1)  # 10% for period
+            horizon_days = max(1, len(data) * 0.2)  # 20% for horizon
             
             initial = f"{int(initial_days)} days"
             period = f"{int(period_days)} days"
             horizon = f"{int(horizon_days)} days"
             
-            self.logger.info(f"Кросс-валидация: initial={initial}, period={period}, horizon={horizon}")
+            self.logger.info(f"Cross-validation: initial={initial}, period={period}, horizon={horizon}")
             
-            # Выполнение кросс-валидации
+            # Execution cross-validation
             cv_results = cross_validation(
                 self.model,
                 initial=initial,
@@ -373,13 +373,13 @@ class ProphetForecaster:
                 parallel="processes"
             )
             
-            # Вычисление метрик
+            # Computation metrics
             metrics = performance_metrics(cv_results)
             
-            # Сохранение результатов
+            # Saving results
             self.cv_results = cv_results
             
-            # Агрегированные метрики
+            # Aggregated metrics
             cv_metrics = {
                 'cv_mae': metrics['mae'].mean(),
                 'cv_mape': metrics['mape'].mean(),
@@ -388,11 +388,11 @@ class ProphetForecaster:
                 'cv_folds': len(cv_results['cutoff'].unique())
             }
             
-            self.logger.info(f"Кросс-валидация завершена: {cv_metrics}")
+            self.logger.info(f"Cross-validation completed: {cv_metrics}")
             return cv_metrics
             
         except Exception as e:
-            self.logger.error(f"Ошибка кросс-валидации: {e}")
+            self.logger.error(f"Error cross-validation: {e}")
             return {}
     
     def predict(
@@ -402,50 +402,50 @@ class ProphetForecaster:
         include_history: bool = False
     ) -> ForecastResult:
         """
-        Прогнозирование с Prophet моделью
+        Forecasting with Prophet model
         
         Args:
-            periods: Количество периодов для прогноза
-            future_data: Предопределенные будущие даты с регрессорами
-            include_history: Включить исторические данные в результат
+            periods: Number periods for forecast
+            future_data: Predefined future dates with regressors
+            include_history: Enable historical data in result
             
         Returns:
-            Результат прогнозирования
+            Result forecasting
             
         Raises:
-            ModelNotTrainedException: Если модель не обучена
-            PredictionException: При ошибке прогнозирования
+            ModelNotTrainedException: If model not trained
+            PredictionException: When error forecasting
         """
         if not self.is_trained or self.model is None:
-            raise ModelNotTrainedException("Модель должна быть обучена перед прогнозированием")
+            raise ModelNotTrainedException("Model must be trained before forecasting")
         
         try:
-            self.logger.info(f"Начало прогнозирования для {self.symbol} ({self.timeframe})")
+            self.logger.info(f"Start forecasting for {self.symbol} ({self.timeframe})")
             
-            # Создание future dataframe
+            # Creation future dataframe
             if future_data is not None:
                 future = future_data.copy()
             else:
                 periods = periods or self.config.data.forecast_horizon_days
                 future = self.model.make_future_dataframe(periods=periods, include_history=include_history)
                 
-                # Добавление cap/floor для logistic growth
+                # Addition cap/floor for logistic growth
                 if self.model_config.growth.value == 'logistic':
                     future['cap'] = self.training_data['y'].max() * 1.2
                     future['floor'] = self.training_data['y'].min() * 0.8
             
-            # Прогнозирование
+            # Forecasting
             forecast = self.model.predict(future)
             
-            # Если нужна только будущая часть
+            # If needed only future part
             if not include_history and future_data is None:
                 last_training_date = self.training_data['ds'].max()
                 forecast = forecast[forecast['ds'] > last_training_date]
             
-            # Извлечение компонентов
+            # Extraction components
             changepoints = [pd.to_datetime(cp) for cp in self.model.changepoints]
             
-            # Компоненты тренда и сезонности
+            # Components trend and seasonality
             components = self.model.predict(future)
             trend_components = {
                 'trend': components['trend'],
@@ -458,13 +458,13 @@ class ProphetForecaster:
                 if f'{component}' in components.columns:
                     seasonality_components[component] = components[component]
             
-            # Кастомная сезонность
+            # Custom seasonality
             for seasonality in self.model_config.custom_seasonalities:
                 name = seasonality['name']
                 if name in components.columns:
                     seasonality_components[name] = components[name]
             
-            # Доверительные интервалы
+            # Confidence intervals
             confidence_intervals = {}
             if 'yhat_lower' in forecast.columns and 'yhat_upper' in forecast.columns:
                 for idx, row in forecast.iterrows():
@@ -473,10 +473,10 @@ class ProphetForecaster:
                         float(row['yhat_upper'])
                     )
             
-            # Вычисление метрик прогноза
+            # Computation metrics forecast
             prediction_metrics = self._calculate_prediction_metrics(forecast)
             
-            # Создание результата
+            # Creation result
             result = ForecastResult(
                 symbol=self.symbol,
                 timeframe=self.timeframe,
@@ -491,35 +491,35 @@ class ProphetForecaster:
             )
             
             self.logger.info(
-                f"Прогноз завершен: {len(forecast)} точек, "
-                f"период с {forecast['ds'].min()} по {forecast['ds'].max()}",
+                f"Forecast completed: {len(forecast)} points, "
+                f"period with {forecast['ds'].min()} by {forecast['ds'].max()}",
                 extra={"prediction_metrics": prediction_metrics}
             )
             
             return result
             
         except Exception as e:
-            self.logger.error(f"Ошибка прогнозирования: {e}")
-            raise PredictionException(f"Не удалось выполнить прогноз: {e}")
+            self.logger.error(f"Error forecasting: {e}")
+            raise PredictionException(f"Not succeeded execute forecast: {e}")
     
     def _calculate_prediction_metrics(self, forecast: pd.DataFrame) -> Dict[str, float]:
-        """Вычисление метрик качества прогноза"""
+        """Computation metrics quality forecast"""
         try:
             metrics = {}
             
-            # Базовые статистики прогноза
+            # Base statistics forecast
             metrics['forecast_mean'] = float(forecast['yhat'].mean())
             metrics['forecast_std'] = float(forecast['yhat'].std())
             metrics['forecast_min'] = float(forecast['yhat'].min())
             metrics['forecast_max'] = float(forecast['yhat'].max())
             
-            # Ширина доверительного интервала
+            # Width confidence interval
             if 'yhat_lower' in forecast.columns and 'yhat_upper' in forecast.columns:
                 interval_width = forecast['yhat_upper'] - forecast['yhat_lower']
                 metrics['mean_interval_width'] = float(interval_width.mean())
                 metrics['interval_width_std'] = float(interval_width.std())
             
-            # Тренд направления
+            # Trend directions
             if len(forecast) > 1:
                 trend_direction = (forecast['yhat'].iloc[-1] - forecast['yhat'].iloc[0]) / len(forecast)
                 metrics['trend_direction'] = float(trend_direction)
@@ -527,7 +527,7 @@ class ProphetForecaster:
             return metrics
             
         except Exception as e:
-            self.logger.warning(f"Не удалось вычислить метрики прогноза: {e}")
+            self.logger.warning(f"Not succeeded compute metrics forecast: {e}")
             return {}
     
     async def predict_async(
@@ -537,15 +537,15 @@ class ProphetForecaster:
         include_history: bool = False
     ) -> ForecastResult:
         """
-        Асинхронное прогнозирование
+        Asynchronous forecasting
         
         Args:
-            periods: Количество периодов для прогноза
-            future_data: Предопределенные будущие даты
-            include_history: Включить исторические данные
+            periods: Number periods for forecast
+            future_data: Predefined future dates
+            include_history: Enable historical data
             
         Returns:
-            Результат прогнозирования
+            Result forecasting
         """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
@@ -554,22 +554,22 @@ class ProphetForecaster:
     
     def save_model(self, filepath: Union[str, Path]) -> None:
         """
-        Сохранение обученной модели
+        Saving trained model
         
         Args:
-            filepath: Путь для сохранения модели
+            filepath: Path for saving model
             
         Raises:
-            ModelNotTrainedException: Если модель не обучена
+            ModelNotTrainedException: If model not trained
         """
         if not self.is_trained or self.model is None:
-            raise ModelNotTrainedException("Нет обученной модели для сохранения")
+            raise ModelNotTrainedException("No trained model for saving")
         
         try:
             filepath = Path(filepath)
             filepath.parent.mkdir(parents=True, exist_ok=True)
             
-            # Данные для сохранения
+            # Data for saving
             model_data = {
                 'model': self.model,
                 'symbol': self.symbol,
@@ -584,32 +584,32 @@ class ProphetForecaster:
             with open(filepath, 'wb') as f:
                 pickle.dump(model_data, f)
             
-            self.logger.info(f"Модель сохранена: {filepath}")
+            self.logger.info(f"Model saved: {filepath}")
             
         except Exception as e:
-            self.logger.error(f"Ошибка сохранения модели: {e}")
-            raise ModelTrainingException(f"Не удалось сохранить модель: {e}")
+            self.logger.error(f"Error saving model: {e}")
+            raise ModelTrainingException(f"Not succeeded save model: {e}")
     
     def load_model(self, filepath: Union[str, Path]) -> None:
         """
-        Загрузка обученной модели
+        Loading trained model
         
         Args:
-            filepath: Путь к файлу модели
+            filepath: Path to file model
             
         Raises:
-            FileNotFoundError: Если файл не найден
-            ModelTrainingException: При ошибке загрузки
+            FileNotFoundError: If file not found
+            ModelTrainingException: When error loading
         """
         try:
             filepath = Path(filepath)
             if not filepath.exists():
-                raise FileNotFoundError(f"Файл модели не найден: {filepath}")
+                raise FileNotFoundError(f"File model not found: {filepath}")
             
             with open(filepath, 'rb') as f:
                 model_data = pickle.load(f)
             
-            # Восстановление состояния
+            # Recovery state
             self.model = model_data['model']
             self.symbol = model_data['symbol']
             self.timeframe = model_data['timeframe']
@@ -619,18 +619,18 @@ class ProphetForecaster:
             self.cv_results = model_data.get('cv_results')
             self.is_trained = True
             
-            self.logger.info(f"Модель загружена: {filepath}")
+            self.logger.info(f"Model loaded: {filepath}")
             
         except Exception as e:
-            self.logger.error(f"Ошибка загрузки модели: {e}")
-            raise ModelTrainingException(f"Не удалось загрузить модель: {e}")
+            self.logger.error(f"Error loading model: {e}")
+            raise ModelTrainingException(f"Not succeeded load model: {e}")
     
     def get_model_info(self) -> Dict[str, Any]:
         """
-        Получение информации о модели
+        Retrieval information about model
         
         Returns:
-            Словарь с информацией о модели
+            Dictionary with information about model
         """
         return {
             'symbol': self.symbol,
@@ -651,18 +651,18 @@ class ProphetForecaster:
         save_path: Optional[Union[str, Path]] = None
     ) -> go.Figure:
         """
-        Создание интерактивного графика прогноза
+        Creation interactive chart forecast
         
         Args:
-            forecast_result: Результат прогнозирования
-            show_components: Показать компоненты (тренд, сезонность)
-            save_path: Путь для сохранения графика
+            forecast_result: Result forecasting
+            show_components: Show components (trend, seasonality)
+            save_path: Path for saving chart
             
         Returns:
-            Plotly Figure объект
+            Plotly Figure object
         """
         try:
-            # Создание subplots
+            # Creation subplots
             rows = 3 if show_components else 1
             fig = make_subplots(
                 rows=rows,
@@ -674,7 +674,7 @@ class ProphetForecaster:
             
             forecast = forecast_result.forecast_df
             
-            # Основной прогноз
+            # Main forecast
             fig.add_trace(
                 go.Scatter(
                     x=forecast['ds'],
@@ -686,7 +686,7 @@ class ProphetForecaster:
                 row=1, col=1
             )
             
-            # Доверительный интервал
+            # Confidence interval
             if 'yhat_lower' in forecast.columns and 'yhat_upper' in forecast.columns:
                 fig.add_trace(
                     go.Scatter(
@@ -714,7 +714,7 @@ class ProphetForecaster:
                     row=1, col=1
                 )
             
-            # Исторические данные
+            # Historical data
             if self.training_data is not None:
                 fig.add_trace(
                     go.Scatter(
@@ -728,9 +728,9 @@ class ProphetForecaster:
                     row=1, col=1
                 )
             
-            # Компоненты
+            # Components
             if show_components and rows > 1:
-                # Тренд
+                # Trend
                 if 'trend' in forecast_result.trend_components:
                     fig.add_trace(
                         go.Scatter(
@@ -743,7 +743,7 @@ class ProphetForecaster:
                         row=2, col=1
                     )
                 
-                # Сезонность
+                # Seasonality
                 seasonality_colors = ['red', 'orange', 'purple', 'brown']
                 for i, (name, component) in enumerate(forecast_result.seasonality_components.items()):
                     if i < len(seasonality_colors):
@@ -758,7 +758,7 @@ class ProphetForecaster:
                             row=3, col=1
                         )
             
-            # Точки изменения
+            # Points changes
             for changepoint in forecast_result.changepoints:
                 fig.add_vline(
                     x=changepoint,
@@ -768,7 +768,7 @@ class ProphetForecaster:
                     annotation_text="Changepoint"
                 )
             
-            # Обновление layout
+            # Update layout
             fig.update_layout(
                 title=f'{self.symbol} Price Forecast ({self.timeframe})',
                 xaxis_title='Date',
@@ -778,15 +778,15 @@ class ProphetForecaster:
                 showlegend=True
             )
             
-            # Сохранение
+            # Saving
             if save_path:
                 save_path = Path(save_path)
                 save_path.parent.mkdir(parents=True, exist_ok=True)
                 fig.write_html(save_path)
-                self.logger.info(f"График сохранен: {save_path}")
+                self.logger.info(f"Chart saved: {save_path}")
             
             return fig
             
         except Exception as e:
-            self.logger.error(f"Ошибка создания графика: {e}")
-            return go.Figure()  # Пустой график при ошибке
+            self.logger.error(f"Error creation chart: {e}")
+            return go.Figure()  # Empty chart when error

@@ -36,10 +36,10 @@ from ..utils.helpers import validate_symbol, validate_timeframe
 logger = get_logger(__name__)
 
 
-# === Pydantic Models для API ===
+# === Pydantic Models for API ===
 
 class ForecastRequest(BaseModel):
-    """Запрос на прогнозирование"""
+    """Request on forecasting"""
     symbol: str = Field(..., description="Cryptocurrency symbol (e.g., BTC)")
     timeframe: str = Field(default="1h", description="Timeframe (1m, 5m, 15m, 30m, 1h, 4h, 1d)")
     periods: Optional[int] = Field(default=None, ge=1, le=365, description="Number of periods to forecast")
@@ -62,7 +62,7 @@ class ForecastRequest(BaseModel):
 
 
 class TrainingRequest(BaseModel):
-    """Запрос на обучение модели"""
+    """Request on training model"""
     symbol: str = Field(..., description="Cryptocurrency symbol")
     timeframe: str = Field(default="1h", description="Timeframe")
     data: List[Dict] = Field(..., description="Training data (OHLCV format)")
@@ -81,7 +81,7 @@ class TrainingRequest(BaseModel):
 
 
 class ValidationRequest(BaseModel):
-    """Запрос на валидацию модели"""
+    """Request on validation model"""
     symbol: str = Field(..., description="Cryptocurrency symbol")
     timeframe: str = Field(default="1h", description="Timeframe") 
     data: List[Dict] = Field(..., description="Validation data")
@@ -91,7 +91,7 @@ class ValidationRequest(BaseModel):
 
 
 class HealthResponse(BaseModel):
-    """Ответ health check"""
+    """Response health check"""
     status: str = Field(..., description="Service status")
     version: str = Field(..., description="Service version")
     timestamp: datetime = Field(..., description="Current timestamp")
@@ -100,7 +100,7 @@ class HealthResponse(BaseModel):
 
 
 class ModelInfoResponse(BaseModel):
-    """Информация о модели"""
+    """Information about model"""
     symbol: str
     timeframe: str
     model_type: str
@@ -111,15 +111,15 @@ class ModelInfoResponse(BaseModel):
     model_metrics: Dict[str, Any]
 
 
-# === Глобальные переменные ===
+# === Global variables ===
 
-# Кэш моделей
+# Cache models
 MODEL_CACHE: Dict[str, Union[ProphetForecaster, AdvancedProphetModel]] = {}
 
-# WebSocket соединения
+# WebSocket connections
 WEBSOCKET_CONNECTIONS: Dict[str, WebSocket] = {}
 
-# Статистика API
+# Statistics API
 API_STATS = {
     "requests_total": 0,
     "errors_total": 0,
@@ -129,10 +129,10 @@ API_STATS = {
 }
 
 
-# === Вспомогательные функции ===
+# === Helper function ===
 
 def get_model_key(symbol: str, timeframe: str) -> str:
-    """Генерация ключа модели для кэша"""
+    """Generation key model for cache"""
     return f"{symbol.upper()}_{timeframe.lower()}"
 
 
@@ -141,7 +141,7 @@ def get_or_create_model(
     timeframe: str, 
     model_type: str = "basic"
 ) -> Union[ProphetForecaster, AdvancedProphetModel]:
-    """Получение или создание модели"""
+    """Retrieval or creation model"""
     model_key = get_model_key(symbol, timeframe)
     
     if model_key not in MODEL_CACHE:
@@ -156,12 +156,12 @@ def get_or_create_model(
 
 
 async def track_request():
-    """Отслеживание запросов"""
+    """Tracking requests"""
     API_STATS["requests_total"] += 1
 
 
 async def handle_api_error(request_id: str, error: Exception) -> JSONResponse:
-    """Обработка ошибок API"""
+    """Processing errors API"""
     API_STATS["errors_total"] += 1
     
     if isinstance(error, ProphetForecastingException):
@@ -191,12 +191,12 @@ async def handle_api_error(request_id: str, error: Exception) -> JSONResponse:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Управление жизненным циклом приложения"""
+    """Management life loop application"""
     # Startup
     logger.info("Starting Prophet Forecasting API")
     config = get_config()
     
-    # Инициализация компонентов
+    # Initialization components
     logger.info(f"Service configuration loaded: {config.service_name} v{config.version}")
     
     yield
@@ -204,21 +204,21 @@ async def lifespan(app: FastAPI):
     # Shutdown
     logger.info("Shutting down Prophet Forecasting API")
     
-    # Очистка ресурсов
+    # Cleanup resources
     MODEL_CACHE.clear()
     WEBSOCKET_CONNECTIONS.clear()
     
     logger.info("Cleanup completed")
 
 
-# === Создание FastAPI приложения ===
+# === Creation FastAPI application ===
 
 def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
     """
-    Создание FastAPI приложения для прогнозирования
+    Creation FastAPI application for forecasting
     
     Args:
-        config: Конфигурация приложения
+        config: Configuration application
         
     Returns:
         FastAPI application instance
@@ -247,14 +247,14 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
             allow_headers=["*"],
         )
     
-    # Сжатие
+    # Compression
     app.add_middleware(GZipMiddleware, minimum_size=1000)
     
-    # === Основные endpoints ===
+    # === Main endpoints ===
     
     @app.get("/", response_class=HTMLResponse)
     async def root():
-        """Корневая страница"""
+        """Root page"""
         return """
         <html>
             <head>
@@ -324,14 +324,14 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
         request_id: str = Depends(lambda: str(uuid.uuid4()))
     ):
         """
-        Создание прогноза цены криптовалюты
+        Creation forecast price cryptocurrency
         
-        - **symbol**: Символ криптовалюты (BTC, ETH, etc.)
-        - **timeframe**: Таймфрейм данных (1m, 5m, 15m, 30m, 1h, 4h, 1d)
-        - **periods**: Количество периодов для прогноза
-        - **data**: OHLCV данные для обучения (опционально)
-        - **target_column**: Целевая колонка (open, high, low, close)
-        - **model_type**: Тип модели (basic, advanced)
+        - **symbol**: Symbol cryptocurrency (BTC, ETH, etc.)
+        - **timeframe**: Timeframe data (1m, 5m, 15m, 30m, 1h, 4h, 1d)
+        - **periods**: Number periods for forecast
+        - **data**: OHLCV data for training (optionally)
+        - **target_column**: Target column (open, high, low, close)
+        - **model_type**: Type model (basic, advanced)
         """
         request_logger = get_request_logger(request_id, endpoint="/forecast")
         background_tasks.add_task(track_request)
@@ -344,14 +344,14 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
                 "model_type": request.model_type
             })
             
-            # Получение или создание модели
+            # Retrieval or creation model
             model = get_or_create_model(
                 request.symbol, 
                 request.timeframe, 
                 request.model_type
             )
             
-            # Обучение модели если предоставлены данные
+            # Training model if provided data
             if request.data:
                 request_logger.info("Training model with provided data")
                 df = pd.DataFrame(request.data)
@@ -362,14 +362,14 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
                     training_result = model.train(df)
                     request_logger.info("Model training completed", extra=training_result)
             
-            # Проверка обученности модели
+            # Validation trainedness model
             if not hasattr(model, 'is_trained') or not model.is_trained:
                 raise HTTPException(
                     status_code=400,
                     detail="Model is not trained. Please provide training data or train the model first."
                 )
             
-            # Создание прогноза
+            # Creation forecast
             if isinstance(model, AdvancedProphetModel):
                 forecast_result = await model.predict_async(
                     periods=request.periods,
@@ -384,7 +384,7 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
             
             API_STATS["predictions_made"] += 1
             
-            # Отправка уведомлений через WebSocket
+            # Sending notifications through WebSocket
             background_tasks.add_task(
                 broadcast_forecast_update, 
                 request.symbol, 
@@ -413,15 +413,15 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
         request_id: str = Depends(lambda: str(uuid.uuid4()))
     ):
         """
-        Обучение Prophet модели
+        Training Prophet model
         
-        - **symbol**: Символ криптовалюты
-        - **timeframe**: Таймфрейм данных
-        - **data**: Обучающие данные в формате OHLCV
-        - **target_column**: Целевая колонка для прогнозирования
-        - **model_type**: Тип модели (basic, advanced)
-        - **auto_optimize**: Автоматическая оптимизация гиперпараметров
-        - **validation_enabled**: Включить валидацию модели
+        - **symbol**: Symbol cryptocurrency
+        - **timeframe**: Timeframe data
+        - **data**: Training data in format OHLCV
+        - **target_column**: Target column for forecasting
+        - **model_type**: Type model (basic, advanced)
+        - **auto_optimize**: Automatic optimization hyperparameters
+        - **validation_enabled**: Enable validation model
         """
         request_logger = get_request_logger(request_id, endpoint="/train")
         background_tasks.add_task(track_request)
@@ -435,23 +435,23 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
                 "auto_optimize": request.auto_optimize
             })
             
-            # Создание модели
+            # Creation model
             model = get_or_create_model(
                 request.symbol,
                 request.timeframe, 
                 request.model_type
             )
             
-            # Подготовка данных
+            # Preparation data
             df = pd.DataFrame(request.data)
             
-            # Обучение модели
+            # Training model
             if isinstance(model, AdvancedProphetModel):
                 training_result = await model.train_async(
                     data=df,
                     auto_optimize=request.auto_optimize,
                     feature_selection=True,
-                    ensemble=False  # Пока отключено для API
+                    ensemble=False  # While disabled for API
                 )
             else:
                 training_result = model.train(
@@ -461,7 +461,7 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
             
             API_STATS["models_trained"] += 1
             
-            # Валидация модели (если включена)
+            # Validation model (if enabled)
             validation_result = None
             if request.validation_enabled:
                 request_logger.info("Running model validation")
@@ -504,14 +504,14 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
         request_id: str = Depends(lambda: str(uuid.uuid4()))
     ):
         """
-        Валидация модели Prophet
+        Validation model Prophet
         
-        - **symbol**: Символ криптовалюты
-        - **timeframe**: Таймфрейм данных
-        - **data**: Данные для валидации
-        - **strategy**: Стратегия валидации
-        - **n_splits**: Количество разбиений для валидации
-        - **test_size_ratio**: Доля тестовых данных
+        - **symbol**: Symbol cryptocurrency
+        - **timeframe**: Timeframe data
+        - **data**: Data for validation
+        - **strategy**: Strategy validation
+        - **n_splits**: Number splits for validation
+        - **test_size_ratio**: Share test data
         """
         request_logger = get_request_logger(request_id, endpoint="/validate")
         background_tasks.add_task(track_request)
@@ -524,7 +524,7 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
                 "n_splits": request.n_splits
             })
             
-            # Получение модели
+            # Retrieval model
             model_key = get_model_key(request.symbol, request.timeframe)
             if model_key not in MODEL_CACHE:
                 raise HTTPException(
@@ -534,17 +534,17 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
             
             model = MODEL_CACHE[model_key]
             
-            # Создание валидатора
+            # Creation validator
             validator = ForecastValidator(request.symbol, request.timeframe)
             
-            # Конфигурация валидации
+            # Configuration validation
             validation_config = ValidationConfig(
                 strategy=request.strategy,
                 n_splits=request.n_splits,
                 test_size_ratio=request.test_size_ratio
             )
             
-            # Выполнение валидации
+            # Execution validation
             df = pd.DataFrame(request.data)
             validation_result = await validator.backtest_model_async(
                 model=model,
@@ -552,10 +552,10 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
                 validation_config=validation_config
             )
             
-            # Создание отчета
+            # Creation report
             report = validator.create_validation_report(
                 validation_result,
-                include_plots=False  # Для API без графиков
+                include_plots=False  # For API without charts
             )
             
             request_logger.info("Validation completed successfully", extra={
@@ -577,7 +577,7 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
     
     @app.get("/models")
     async def list_models():
-        """Список загруженных моделей"""
+        """List loaded models"""
         models = []
         
         for model_key, model in MODEL_CACHE.items():
@@ -601,7 +601,7 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
     
     @app.get("/models/{symbol}/{timeframe}", response_model=ModelInfoResponse)
     async def get_model_info(symbol: str, timeframe: str):
-        """Информация о конкретной модели"""
+        """Information about specific model"""
         model_key = get_model_key(symbol, timeframe)
         
         if model_key not in MODEL_CACHE:
@@ -620,13 +620,13 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
             is_trained=info["is_trained"],
             training_timestamp=datetime.fromisoformat(info["last_training_time"]) if info.get("last_training_time") else None,
             training_samples=info.get("training_data_size", 0),
-            last_prediction=None,  # TODO: Добавить отслеживание последнего прогноза
+            last_prediction=None,  # TODO: Add tracking last forecast
             model_metrics=info.get("training_metrics", {})
         )
     
     @app.delete("/models/{symbol}/{timeframe}")
     async def delete_model(symbol: str, timeframe: str):
-        """Удаление модели из кэша"""
+        """Removal model from cache"""
         model_key = get_model_key(symbol, timeframe)
         
         if model_key not in MODEL_CACHE:
@@ -647,7 +647,7 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
     
     @app.get("/stats")
     async def get_api_stats():
-        """Статистика API"""
+        """Statistics API"""
         uptime = (datetime.now() - API_STATS["start_time"]).total_seconds()
         
         return {
@@ -670,14 +670,14 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
     
     @app.websocket("/ws/{client_id}")
     async def websocket_endpoint(websocket: WebSocket, client_id: str):
-        """WebSocket endpoint для real-time уведомлений"""
+        """WebSocket endpoint for real-time notifications"""
         await websocket.accept()
         WEBSOCKET_CONNECTIONS[client_id] = websocket
         
         logger.info(f"WebSocket client connected: {client_id}")
         
         try:
-            # Отправка приветствия
+            # Sending greetings
             await websocket.send_json({
                 "type": "connection",
                 "message": "Connected to Prophet Forecasting API",
@@ -685,7 +685,7 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
                 "timestamp": datetime.now().isoformat()
             })
             
-            # Ожидание сообщений от клиента
+            # Waiting messages from client
             while True:
                 message = await websocket.receive_text()
                 
@@ -706,7 +706,7 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
                 del WEBSOCKET_CONNECTIONS[client_id]
     
     async def handle_websocket_message(client_id: str, message: Dict[str, Any]):
-        """Обработка сообщений от WebSocket клиента"""
+        """Processing messages from WebSocket client"""
         websocket = WEBSOCKET_CONNECTIONS.get(client_id)
         if not websocket:
             return
@@ -714,7 +714,7 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
         message_type = message.get("type")
         
         if message_type == "subscribe":
-            # Подписка на обновления конкретной модели
+            # Subscription on updates specific model
             symbol = message.get("symbol", "").upper()
             timeframe = message.get("timeframe", "").lower()
             
@@ -727,14 +727,14 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
             })
             
         elif message_type == "ping":
-            # Ответ на ping для поддержания соединения
+            # Response on ping for maintenance connections
             await websocket.send_json({
                 "type": "pong",
                 "timestamp": datetime.now().isoformat()
             })
     
     async def broadcast_forecast_update(symbol: str, forecast_result: Union[ForecastResult, AdvancedForecastResult]):
-        """Рассылка обновлений прогноза через WebSocket"""
+        """Mailing updates forecast through WebSocket"""
         if not WEBSOCKET_CONNECTIONS:
             return
         
@@ -752,7 +752,7 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
             "timestamp": datetime.now().isoformat()
         }
         
-        # Отправка всем подключенным клиентам
+        # Sending all connected clients
         disconnected_clients = []
         for client_id, websocket in WEBSOCKET_CONNECTIONS.items():
             try:
@@ -760,7 +760,7 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
             except:
                 disconnected_clients.append(client_id)
         
-        # Удаление отключенных клиентов
+        # Removal disabled clients
         for client_id in disconnected_clients:
             del WEBSOCKET_CONNECTIONS[client_id]
     
@@ -768,7 +768,7 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
     
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request, exc):
-        """Обработчик HTTP исключений"""
+        """Handler HTTP exceptions"""
         return JSONResponse(
             status_code=exc.status_code,
             content={
@@ -784,7 +784,7 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
     
     @app.exception_handler(Exception)
     async def general_exception_handler(request, exc):
-        """Общий обработчик исключений"""
+        """Total handler exceptions"""
         logger.error(f"Unhandled exception: {exc}", exc_info=True)
         
         return JSONResponse(
@@ -803,7 +803,7 @@ def create_forecast_app(config: Optional[ProphetConfig] = None) -> FastAPI:
     return app
 
 
-# === Функция запуска ===
+# === Function launch ===
 
 def run_server(
     host: str = "0.0.0.0",
@@ -812,13 +812,13 @@ def run_server(
     config: Optional[ProphetConfig] = None
 ):
     """
-    Запуск FastAPI сервера
+    Launch FastAPI server
     
     Args:
-        host: Хост для привязки
-        port: Порт для прослушивания
-        debug: Режим отладки
-        config: Конфигурация приложения
+        host: Host for bindings
+        port: Port for listening
+        debug: Mode debugging
+        config: Configuration application
     """
     if config is None:
         config = get_config()

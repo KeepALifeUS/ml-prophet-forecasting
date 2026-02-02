@@ -42,7 +42,7 @@ logger = get_logger(__name__)
 @dataclass
 class OptimizationResult:
     """
-    Результат оптимизации гиперпараметров
+    Result optimization hyperparameters
     """
     best_params: Dict[str, Any]
     best_score: float
@@ -53,7 +53,7 @@ class OptimizationResult:
     study_stats: Dict[str, Any]
     
     def to_dict(self) -> Dict[str, Any]:
-        """Конвертация в словарь"""
+        """Conversion in dictionary"""
         return {
             "best_params": self.best_params,
             "best_score": self.best_score,
@@ -68,7 +68,7 @@ class OptimizationResult:
 @dataclass
 class AdvancedForecastResult(ForecastResult):
     """
-    Расширенный результат прогнозирования с дополнительной информацией
+    Extended result forecasting with additional information
     """
     regressor_contributions: Dict[str, pd.Series]
     uncertainty_decomposition: Dict[str, pd.Series]
@@ -77,7 +77,7 @@ class AdvancedForecastResult(ForecastResult):
     optimization_history: Optional[OptimizationResult]
     
     def to_dict(self) -> Dict[str, Any]:
-        """Расширенная конвертация в словарь"""
+        """Extended conversion in dictionary"""
         base_dict = super().to_dict()
         base_dict.update({
             "regressor_contributions": {
@@ -95,16 +95,16 @@ class AdvancedForecastResult(ForecastResult):
 
 class AdvancedProphetModel(LoggerMixin):
     """
-    Продвинутая Prophet модель с многомерными признаками
+    Advanced Prophet model with multidimensional features
     
-    Расширенные возможности:
-    - Автоматический отбор и обработка внешних регрессоров
-    - Bayesian оптимизация гиперпараметров
-    - Кастомные компоненты сезонности для крипто рынков
-    - Анализ важности признаков
-    - Декомпозиция неопределенности
-    - Ensemble методы с несколькими моделями
-    - Автоматическое детектирование аномалий
+    Extended capabilities:
+    - Automatic selection and processing external regressors
+    - Bayesian optimization hyperparameters
+    - Custom components seasonality for crypto markets
+    - Analysis importance features
+    - Decomposition uncertainty
+    - Ensemble methods with several models
+    - Automatic detection anomalies
     - Advanced cross-validation strategies
     """
     
@@ -115,12 +115,12 @@ class AdvancedProphetModel(LoggerMixin):
         config: Optional[ProphetConfig] = None
     ):
         """
-        Инициализация продвинутой Prophet модели
+        Initialization advanced Prophet model
         
         Args:
-            symbol: Символ криптовалюты
-            timeframe: Таймфрейм данных
-            config: Конфигурация модели
+            symbol: Symbol cryptocurrency
+            timeframe: Timeframe data
+            config: Configuration model
         """
         super().__init__()
         
@@ -129,38 +129,38 @@ class AdvancedProphetModel(LoggerMixin):
         self.config = config or get_config()
         self.model_config = self.config.get_model_config_for_crypto(symbol)
         
-        # Состояние модели
+        # State model
         self.base_model: Optional[Prophet] = None
         self.ensemble_models: Dict[str, Prophet] = {}
         self.is_trained = False
         self.training_data: Optional[ProcessedData] = None
         self.last_training_time: Optional[datetime] = None
         
-        # Обработчик данных
+        # Handler data
         self.data_processor = CryptoDataProcessor(
             symbol=symbol,
             timeframe=timeframe,
             config=self.config.data
         )
         
-        # Инструменты для анализа
+        # Tools for analysis
         self.scaler = StandardScaler()
         self.feature_selector: Optional[Any] = None
         self.optimization_result: Optional[OptimizationResult] = None
         
-        # Метрики и диагностика
+        # Metrics and diagnostics
         self.feature_importance: Dict[str, float] = {}
         self.model_diagnostics: Dict[str, Any] = {}
         self.training_metrics: Dict[str, float] = {}
         
-        # Контекст логирования
+        # Context logging
         self.set_log_context(
             symbol=self.symbol,
             timeframe=self.timeframe,
             model_type="AdvancedProphet"
         )
         
-        self.logger.info(f"Инициализирована AdvancedProphetModel для {self.symbol} ({self.timeframe})")
+        self.logger.info(f"Initialized AdvancedProphetModel for {self.symbol} ({self.timeframe})")
     
     @timed_operation("optimize_hyperparameters")
     def optimize_hyperparameters(
@@ -172,20 +172,20 @@ class AdvancedProphetModel(LoggerMixin):
         cv_strategy: str = "time_series"
     ) -> OptimizationResult:
         """
-        Оптимизация гиперпараметров модели
+        Optimization hyperparameters model
         
         Args:
-            data: Данные для оптимизации
-            method: Метод оптимизации
-            n_trials: Количество попыток
-            timeout_hours: Таймаут в часах
-            cv_strategy: Стратегия кросс-валидации
+            data: Data for optimization
+            method: Method optimization
+            n_trials: Number attempts
+            timeout_hours: Timeout in hours
+            cv_strategy: Strategy cross-validation
             
         Returns:
-            Результат оптимизации
+            Result optimization
             
         Raises:
-            OptimizationException: При ошибке оптимизации
+            OptimizationException: When error optimization
         """
         try:
             method = method or self.config.optimization.method
@@ -195,7 +195,7 @@ class AdvancedProphetModel(LoggerMixin):
             self.log_operation_start("optimize_hyperparameters", 
                                    method=method.value, n_trials=n_trials)
             
-            # Подготовка данных
+            # Preparation data
             if isinstance(data, pd.DataFrame):
                 processed_data = self.data_processor.process_ohlcv_data(data, include_features=True)
             else:
@@ -203,7 +203,7 @@ class AdvancedProphetModel(LoggerMixin):
             
             start_time = datetime.now()
             
-            # Выбор метода оптимизации
+            # Selection method optimization
             if method == OptimizationMethod.BAYESIAN or method == OptimizationMethod.OPTUNA:
                 result = self._optimize_with_optuna(
                     processed_data, n_trials, timeout_hours, cv_strategy
@@ -215,11 +215,11 @@ class AdvancedProphetModel(LoggerMixin):
             else:
                 raise OptimizationException(f"Unsupported optimization method: {method}")
             
-            # Сохранение результата
+            # Saving result
             result.optimization_duration = (datetime.now() - start_time).total_seconds()
             self.optimization_result = result
             
-            # Обновление конфигурации модели с лучшими параметрами
+            # Update configuration model with best parameters
             self._update_model_config_with_best_params(result.best_params)
             
             self.log_operation_end("optimize_hyperparameters", success=True,
@@ -243,11 +243,11 @@ class AdvancedProphetModel(LoggerMixin):
         timeout_hours: float,
         cv_strategy: str
     ) -> OptimizationResult:
-        """Оптимизация с использованием Optuna"""
+        """Optimization with using Optuna"""
         
         def objective(trial):
-            """Целевая функция для Optuna"""
-            # Предлагаемые параметры
+            """Target function for Optuna"""
+            # Proposed parameters
             params = {}
             param_space = self.config.optimization.param_space
             
@@ -265,18 +265,18 @@ class AdvancedProphetModel(LoggerMixin):
                         param_name, param_config['choices']
                     )
             
-            # Создание временной модели с предлагаемыми параметрами
+            # Creation temporal model with proposed parameters
             temp_model = self._create_prophet_with_params(params)
             
-            # Кросс-валидация
+            # Cross-validation
             try:
                 cv_score = self._evaluate_model_cv(temp_model, data, cv_strategy)
                 return cv_score
             except Exception as e:
                 self.logger.warning(f"Trial failed: {e}")
-                return float('inf')  # Плохой результат для минимизации
+                return float('inf')  # Poor result for minimization
         
-        # Создание исследования
+        # Creation research
         study = optuna.create_study(
             direction='minimize',
             sampler=TPESampler(seed=42),
@@ -286,7 +286,7 @@ class AdvancedProphetModel(LoggerMixin):
             )
         )
         
-        # Оптимизация
+        # Optimization
         study.optimize(
             objective,
             n_trials=n_trials,
@@ -294,7 +294,7 @@ class AdvancedProphetModel(LoggerMixin):
             show_progress_bar=True
         )
         
-        # Создание результата
+        # Creation result
         study_stats = {
             'n_trials': len(study.trials),
             'best_trial_number': study.best_trial.number,
@@ -308,7 +308,7 @@ class AdvancedProphetModel(LoggerMixin):
             best_score=study.best_value,
             optimization_method="optuna",
             trials_count=len(study.trials),
-            optimization_duration=0,  # Будет установлено в вызывающем коде
+            optimization_duration=0,  # Will be set in calling code
             cv_results=None,
             study_stats=study_stats
         )
@@ -316,12 +316,12 @@ class AdvancedProphetModel(LoggerMixin):
         return result
     
     def _optimize_with_grid_search(self, data: ProcessedData, cv_strategy: str) -> OptimizationResult:
-        """Оптимизация методом Grid Search"""
+        """Optimization method Grid Search"""
         from itertools import product
         
         param_space = self.config.optimization.param_space
         
-        # Создание сетки параметров
+        # Creation grid parameters
         param_names = []
         param_values = []
         
@@ -335,7 +335,7 @@ class AdvancedProphetModel(LoggerMixin):
                 values = config.get('choices', [config.get('default')])
             param_values.append(values)
         
-        # Перебор всех комбинаций
+        # Enumeration all combinations
         best_score = float('inf')
         best_params = {}
         results = []
@@ -372,7 +372,7 @@ class AdvancedProphetModel(LoggerMixin):
         n_trials: int, 
         cv_strategy: str
     ) -> OptimizationResult:
-        """Оптимизация методом Random Search"""
+        """Optimization method Random Search"""
         import random
         
         param_space = self.config.optimization.param_space
@@ -416,7 +416,7 @@ class AdvancedProphetModel(LoggerMixin):
         )
     
     def _create_prophet_with_params(self, params: Dict[str, Any]) -> Prophet:
-        """Создание Prophet модели с заданными параметрами"""
+        """Creation Prophet model with specified parameters"""
         prophet_params = {
             'growth': params.get('growth', self.model_config.growth.value),
             'seasonality_mode': self.model_config.seasonality_mode.value,
@@ -435,17 +435,17 @@ class AdvancedProphetModel(LoggerMixin):
         return Prophet(**prophet_params)
     
     def _evaluate_model_cv(self, model: Prophet, data: ProcessedData, cv_strategy: str) -> float:
-        """Оценка модели через кросс-валидацию"""
+        """Estimation model through cross-validation"""
         try:
-            # Подготовка данных для кросс-валидации
+            # Preparation data for cross-validation
             df = data.prophet_df.copy()
             
-            # Добавление регрессоров
+            # Addition regressors
             for regressor in self.model_config.additional_regressors:
                 if regressor in df.columns:
                     model.add_regressor(regressor)
             
-            # Кастомная сезонность
+            # Custom seasonality
             for seasonality in self.model_config.custom_seasonalities:
                 model.add_seasonality(
                     name=seasonality['name'],
@@ -454,10 +454,10 @@ class AdvancedProphetModel(LoggerMixin):
                     mode=seasonality.get('mode', 'additive')
                 )
             
-            # Обучение
+            # Training
             model.fit(df)
             
-            # Параметры кросс-валидации
+            # Parameters cross-validation
             total_days = (df['ds'].max() - df['ds'].min()).days
             initial_days = int(total_days * 0.7)
             period_days = max(1, int(total_days * 0.1))
@@ -467,15 +467,15 @@ class AdvancedProphetModel(LoggerMixin):
             period = f"{period_days} days"
             horizon = f"{horizon_days} days"
             
-            # Выполнение кросс-валидации
+            # Execution cross-validation
             cv_results = cross_validation(
                 model, initial=initial, period=period, horizon=horizon
             )
             
-            # Вычисление метрик
+            # Computation metrics
             metrics = performance_metrics(cv_results)
             
-            # Возвращаем метрику для оптимизации
+            # Return metric for optimization
             metric_name = self.config.optimization.optimization_metric
             if metric_name in metrics.columns:
                 return metrics[metric_name].mean()
@@ -487,7 +487,7 @@ class AdvancedProphetModel(LoggerMixin):
             return float('inf')
     
     def _update_model_config_with_best_params(self, best_params: Dict[str, Any]):
-        """Обновление конфигурации модели лучшими параметрами"""
+        """Update configuration model best parameters"""
         for param_name, param_value in best_params.items():
             if hasattr(self.model_config, param_name):
                 setattr(self.model_config, param_name, param_value)
@@ -502,16 +502,16 @@ class AdvancedProphetModel(LoggerMixin):
         ensemble: bool = False
     ) -> Dict[str, Any]:
         """
-        Обучение продвинутой Prophet модели
+        Training advanced Prophet model
         
         Args:
-            data: Данные для обучения
-            auto_optimize: Автоматическая оптимизация гиперпараметров
-            feature_selection: Автоматический отбор признаков
-            ensemble: Создание ensemble модели
+            data: Data for training
+            auto_optimize: Automatic optimization hyperparameters
+            feature_selection: Automatic selection features
+            ensemble: Creation ensemble model
             
         Returns:
-            Метрики обучения
+            Metrics training
         """
         try:
             self.log_operation_start("train_advanced_model",
@@ -519,7 +519,7 @@ class AdvancedProphetModel(LoggerMixin):
                                    feature_selection=feature_selection,
                                    ensemble=ensemble)
             
-            # Подготовка данных
+            # Preparation data
             if isinstance(data, pd.DataFrame):
                 processed_data = self.data_processor.process_ohlcv_data(data, include_features=True)
             else:
@@ -527,27 +527,27 @@ class AdvancedProphetModel(LoggerMixin):
             
             self.training_data = processed_data
             
-            # Автоматическая оптимизация (если требуется)
+            # Automatic optimization (if is required)
             if auto_optimize:
-                self.logger.info("Запуск автоматической оптимизации гиперпараметров")
+                self.logger.info("Launch automatic optimization hyperparameters")
                 self.optimize_hyperparameters(processed_data)
             
-            # Отбор признаков
+            # Selection features
             if feature_selection:
                 processed_data = self._select_features(processed_data)
             
-            # Обучение основной модели
+            # Training main model
             training_metrics = self._train_base_model(processed_data)
             
-            # Создание ensemble (если требуется)
+            # Creation ensemble (if is required)
             if ensemble:
                 ensemble_metrics = self._train_ensemble_models(processed_data)
                 training_metrics.update(ensemble_metrics)
             
-            # Анализ важности признаков
+            # Analysis importance features
             self._analyze_feature_importance(processed_data)
             
-            # Диагностика модели
+            # Diagnostics model
             self._run_model_diagnostics(processed_data)
             
             self.is_trained = True
@@ -563,7 +563,7 @@ class AdvancedProphetModel(LoggerMixin):
             raise ModelTrainingException(f"Failed to train advanced model: {e}", original_exception=e)
     
     def _select_features(self, data: ProcessedData) -> ProcessedData:
-        """Автоматический отбор признаков"""
+        """Automatic selection features"""
         try:
             df = data.prophet_df.copy()
             features_cols = [col for col in df.columns if col not in ['ds', 'y']]
@@ -571,7 +571,7 @@ class AdvancedProphetModel(LoggerMixin):
             if not features_cols:
                 return data
             
-            # Корреляционный анализ
+            # Correlation analysis
             correlations = {}
             for col in features_cols:
                 try:
@@ -581,13 +581,13 @@ class AdvancedProphetModel(LoggerMixin):
                 except:
                     continue
             
-            # Отбор топ признаков по корреляции
+            # Selection top features by correlation
             top_features = sorted(correlations.items(), key=lambda x: x[1], reverse=True)[:10]
             selected_features = [feat for feat, corr in top_features if corr > 0.1]
             
-            self.logger.info(f"Отобрано {len(selected_features)} признаков из {len(features_cols)}")
+            self.logger.info(f"Selected {len(selected_features)} features from {len(features_cols)}")
             
-            # Создание нового ProcessedData с отобранными признаками
+            # Creation new ProcessedData with selected features
             selected_cols = ['ds', 'y'] + selected_features
             filtered_df = df[selected_cols].copy()
             
@@ -603,10 +603,10 @@ class AdvancedProphetModel(LoggerMixin):
             return data
     
     def _train_base_model(self, data: ProcessedData) -> Dict[str, float]:
-        """Обучение основной модели"""
+        """Training main model"""
         df = data.prophet_df.copy()
         
-        # Создание модели
+        # Creation model
         self.base_model = Prophet(
             growth=self.model_config.growth.value,
             seasonality_mode=self.model_config.seasonality_mode.value,
@@ -622,7 +622,7 @@ class AdvancedProphetModel(LoggerMixin):
             uncertainty_samples=self.model_config.uncertainty_samples
         )
         
-        # Добавление регрессоров
+        # Addition regressors
         regressor_cols = [col for col in df.columns if col not in ['ds', 'y']]
         for col in regressor_cols:
             if col in self.model_config.additional_regressors or len(regressor_cols) <= 10:
@@ -631,7 +631,7 @@ class AdvancedProphetModel(LoggerMixin):
                 except:
                     continue
         
-        # Кастомная сезонность
+        # Custom seasonality
         for seasonality in self.model_config.custom_seasonalities:
             try:
                 self.base_model.add_seasonality(
@@ -643,12 +643,12 @@ class AdvancedProphetModel(LoggerMixin):
             except:
                 continue
         
-        # Обучение
+        # Training
         start_time = datetime.now()
         self.base_model.fit(df)
         training_time = (datetime.now() - start_time).total_seconds()
         
-        # Метрики
+        # Metrics
         metrics = {
             'training_time_seconds': training_time,
             'training_samples': len(df),
@@ -660,15 +660,15 @@ class AdvancedProphetModel(LoggerMixin):
         return metrics
     
     def _train_ensemble_models(self, data: ProcessedData) -> Dict[str, float]:
-        """Обучение ensemble моделей"""
-        # Пока простая реализация - можно расширить
+        """Training ensemble models"""
+        # While simple implementation - possible extend
         ensemble_metrics = {
             'ensemble_models': 0,
             'ensemble_training_time': 0
         }
         
         try:
-            # Модель с разными параметрами changepoint_prior_scale
+            # Model with different parameters changepoint_prior_scale
             for i, scale in enumerate([0.01, 0.05, 0.1]):
                 model_name = f"ensemble_{i}"
                 model = Prophet(
@@ -676,7 +676,7 @@ class AdvancedProphetModel(LoggerMixin):
                     seasonality_mode=self.model_config.seasonality_mode.value
                 )
                 
-                # Добавление основных регрессоров
+                # Addition main regressors
                 regressor_cols = [col for col in data.prophet_df.columns if col not in ['ds', 'y']][:5]
                 for col in regressor_cols:
                     try:
@@ -688,7 +688,7 @@ class AdvancedProphetModel(LoggerMixin):
                 self.ensemble_models[model_name] = model
                 
             ensemble_metrics['ensemble_models'] = len(self.ensemble_models)
-            self.logger.info(f"Обучено {len(self.ensemble_models)} ensemble моделей")
+            self.logger.info(f"Trained {len(self.ensemble_models)} ensemble models")
             
         except Exception as e:
             self.logger.warning(f"Ensemble training failed: {e}")
@@ -696,19 +696,19 @@ class AdvancedProphetModel(LoggerMixin):
         return ensemble_metrics
     
     def _analyze_feature_importance(self, data: ProcessedData):
-        """Анализ важности признаков"""
+        """Analysis importance features"""
         if self.base_model is None:
             return
         
         try:
-            # Простой анализ на основе корреляции с остатками
+            # Simple analysis on basis correlation with residuals
             df = data.prophet_df.copy()
             
-            # Получение прогнозов на обучающих данных
+            # Retrieval forecasts on training data
             forecast = self.base_model.predict(df[['ds'] + [col for col in df.columns if col not in ['ds', 'y']]])
             residuals = df['y'] - forecast['yhat']
             
-            # Корреляция признаков с остатками
+            # Correlation features with residuals
             feature_cols = [col for col in df.columns if col not in ['ds', 'y']]
             for col in feature_cols:
                 try:
@@ -718,17 +718,17 @@ class AdvancedProphetModel(LoggerMixin):
                 except:
                     continue
                     
-            self.logger.debug(f"Вычислена важность для {len(self.feature_importance)} признаков")
+            self.logger.debug(f"Computed importance for {len(self.feature_importance)} features")
             
         except Exception as e:
             self.logger.warning(f"Feature importance analysis failed: {e}")
     
     def _run_model_diagnostics(self, data: ProcessedData):
-        """Запуск диагностики модели"""
+        """Launch diagnostics model"""
         try:
             df = data.prophet_df.copy()
             
-            # Базовая диагностика
+            # Base diagnostics
             self.model_diagnostics = {
                 'training_data_shape': df.shape,
                 'training_period_days': (df['ds'].max() - df['ds'].min()).days,
@@ -740,7 +740,7 @@ class AdvancedProphetModel(LoggerMixin):
                 }
             }
             
-            # Добавление метрик оптимизации (если есть)
+            # Addition metrics optimization (if exists)
             if self.optimization_result:
                 self.model_diagnostics['optimization'] = {
                     'best_score': self.optimization_result.best_score,
@@ -760,38 +760,38 @@ class AdvancedProphetModel(LoggerMixin):
         uncertainty_analysis: bool = True
     ) -> AdvancedForecastResult:
         """
-        Продвинутое прогнозирование с дополнительным анализом
+        Advanced forecasting with additional analysis
         
         Args:
-            periods: Количество периодов для прогноза
-            future_data: Будущие данные с регрессорами
-            include_history: Включить историю
-            uncertainty_analysis: Анализ неопределенности
+            periods: Number periods for forecast
+            future_data: Future data with regressors
+            include_history: Enable history
+            uncertainty_analysis: Analysis uncertainty
             
         Returns:
-            Расширенный результат прогнозирования
+            Extended result forecasting
         """
         if not self.is_trained or self.base_model is None:
             raise PredictionException("Model must be trained before prediction")
         
         try:
-            self.logger.info("Начало продвинутого прогнозирования")
+            self.logger.info("Start advanced forecasting")
             
-            # Базовый прогноз
+            # Base forecast
             base_forecast = self._predict_base_model(periods, future_data, include_history)
             
-            # Ensemble прогноз (если есть)
+            # Ensemble forecast (if exists)
             ensemble_forecasts = self._predict_ensemble_models(periods, future_data, include_history)
             
-            # Анализ вклада регрессоров
+            # Analysis contribution regressors
             regressor_contributions = self._analyze_regressor_contributions(base_forecast)
             
-            # Декомпозиция неопределенности
+            # Decomposition uncertainty
             uncertainty_decomposition = {}
             if uncertainty_analysis:
                 uncertainty_decomposition = self._decompose_uncertainty(base_forecast)
             
-            # Создание расширенного результата
+            # Creation extended result
             result = AdvancedForecastResult(
                 symbol=self.symbol,
                 timeframe=self.timeframe,
@@ -810,7 +810,7 @@ class AdvancedProphetModel(LoggerMixin):
                 optimization_history=self.optimization_result
             )
             
-            self.logger.info(f"Прогноз завершен: {len(base_forecast)} точек")
+            self.logger.info(f"Forecast completed: {len(base_forecast)} points")
             return result
             
         except Exception as e:
@@ -823,14 +823,14 @@ class AdvancedProphetModel(LoggerMixin):
         future_data: Optional[pd.DataFrame], 
         include_history: bool
     ) -> pd.DataFrame:
-        """Прогноз базовой моделью"""
+        """Forecast base model"""
         if future_data is not None:
             future = future_data.copy()
         else:
             periods = periods or self.config.data.forecast_horizon_days
             future = self.base_model.make_future_dataframe(periods=periods, include_history=include_history)
             
-            # Добавление регрессоров (нулевые значения для простоты)
+            # Addition regressors (zero values for simplicity)
             for regressor in self.base_model.extra_regressors.keys():
                 if regressor not in future.columns:
                     future[regressor] = 0
@@ -843,7 +843,7 @@ class AdvancedProphetModel(LoggerMixin):
         future_data: Optional[pd.DataFrame], 
         include_history: bool
     ) -> Dict[str, pd.DataFrame]:
-        """Прогноз ensemble моделей"""
+        """Forecast ensemble models"""
         ensemble_forecasts = {}
         
         for name, model in self.ensemble_models.items():
@@ -854,7 +854,7 @@ class AdvancedProphetModel(LoggerMixin):
                     periods = periods or self.config.data.forecast_horizon_days
                     future = model.make_future_dataframe(periods=periods, include_history=include_history)
                     
-                    # Добавление регрессоров
+                    # Addition regressors
                     for regressor in model.extra_regressors.keys():
                         if regressor not in future.columns:
                             future[regressor] = 0
@@ -868,11 +868,11 @@ class AdvancedProphetModel(LoggerMixin):
         return ensemble_forecasts
     
     def _analyze_regressor_contributions(self, forecast: pd.DataFrame) -> Dict[str, pd.Series]:
-        """Анализ вклада регрессоров в прогноз"""
+        """Analysis contribution regressors in forecast"""
         contributions = {}
         
         try:
-            # Поиск колонок регрессоров в прогнозе
+            # Search columns regressors in forecast
             regressor_cols = [col for col in forecast.columns 
                             if col not in ['ds', 'yhat', 'yhat_lower', 'yhat_upper', 'trend']]
             
@@ -886,16 +886,16 @@ class AdvancedProphetModel(LoggerMixin):
         return contributions
     
     def _decompose_uncertainty(self, forecast: pd.DataFrame) -> Dict[str, pd.Series]:
-        """Декомпозиция неопределенности"""
+        """Decomposition uncertainty"""
         decomposition = {}
         
         try:
             if 'yhat_lower' in forecast.columns and 'yhat_upper' in forecast.columns:
-                # Общая неопределенность
+                # Total uncertainty
                 total_uncertainty = forecast['yhat_upper'] - forecast['yhat_lower']
                 decomposition['total_uncertainty'] = total_uncertainty
                 
-                # Процентная неопределенность
+                # Percentage uncertainty
                 relative_uncertainty = total_uncertainty / forecast['yhat'].abs() * 100
                 decomposition['relative_uncertainty'] = relative_uncertainty
                 
@@ -905,7 +905,7 @@ class AdvancedProphetModel(LoggerMixin):
         return decomposition
     
     def _calculate_forecast_metrics(self, forecast: pd.DataFrame) -> Dict[str, float]:
-        """Вычисление метрик прогноза"""
+        """Computation metrics forecast"""
         metrics = {}
         
         try:
@@ -923,7 +923,7 @@ class AdvancedProphetModel(LoggerMixin):
         return metrics
     
     def _extract_confidence_intervals(self, forecast: pd.DataFrame) -> Dict[str, Tuple[float, float]]:
-        """Извлечение доверительных интервалов"""
+        """Extraction confidence intervals"""
         intervals = {}
         
         try:
@@ -939,7 +939,7 @@ class AdvancedProphetModel(LoggerMixin):
         return intervals
     
     def _extract_trend_components(self, forecast: pd.DataFrame) -> Dict[str, pd.Series]:
-        """Извлечение компонентов тренда"""
+        """Extraction components trend"""
         components = {}
         
         try:
@@ -952,7 +952,7 @@ class AdvancedProphetModel(LoggerMixin):
         return components
     
     def _extract_seasonality_components(self, forecast: pd.DataFrame) -> Dict[str, pd.Series]:
-        """Извлечение компонентов сезонности"""
+        """Extraction components seasonality"""
         components = {}
         
         try:
@@ -961,7 +961,7 @@ class AdvancedProphetModel(LoggerMixin):
                 if col in forecast.columns:
                     components[col] = forecast[col]
                     
-            # Кастомная сезонность
+            # Custom seasonality
             for seasonality in self.model_config.custom_seasonalities:
                 name = seasonality['name']
                 if name in forecast.columns:
@@ -973,17 +973,17 @@ class AdvancedProphetModel(LoggerMixin):
         return components
     
     async def train_async(self, *args, **kwargs) -> Dict[str, Any]:
-        """Асинхронное обучение"""
+        """Asynchronous training"""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.train, *args, **kwargs)
     
     async def predict_async(self, *args, **kwargs) -> AdvancedForecastResult:
-        """Асинхронное прогнозирование"""
+        """Asynchronous forecasting"""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.predict, *args, **kwargs)
     
     def get_model_info(self) -> Dict[str, Any]:
-        """Расширенная информация о модели"""
+        """Extended information about model"""
         base_info = {
             'symbol': self.symbol,
             'timeframe': self.timeframe,

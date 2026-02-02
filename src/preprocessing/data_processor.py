@@ -35,15 +35,15 @@ logger = get_logger(__name__)
 @dataclass
 class ProcessedData:
     """
-    Результат обработки данных для Prophet
+    Result processing data for Prophet
     """
-    prophet_df: pd.DataFrame  # Данные в формате Prophet (ds, y, ...)
-    original_df: pd.DataFrame  # Исходные данные
-    features_df: pd.DataFrame  # Дополнительные признаки
-    metadata: Dict[str, Any]  # Метаданные обработки
+    prophet_df: pd.DataFrame  # Data in format Prophet (ds, y, ...)
+    original_df: pd.DataFrame  # Original data
+    features_df: pd.DataFrame  # Additional features
+    metadata: Dict[str, Any]  # Metadata processing
     
     def to_dict(self) -> Dict[str, Any]:
-        """Конвертация в словарь для сериализации"""
+        """Conversion in dictionary for serialization"""
         return {
             "prophet_data": self.prophet_df.to_dict('records'),
             "original_data": self.original_df.to_dict('records'),
@@ -54,15 +54,15 @@ class ProcessedData:
 
 class CryptoDataProcessor(LoggerMixin):
     """
-    Комплексный процессор данных для криптовалютного прогнозирования
+    Comprehensive processor data for cryptocurrency forecasting
     
-    Основные функции:
-    - Валидация и очистка OHLCV данных
-    - Детекция и обработка выбросов  
-    - Feature engineering для crypto рынков
-    - Подготовка данных в формате Prophet
-    - Создание дополнительных регрессоров
-    - Оптимизация производительности
+    Main function:
+    - Validation and cleanup OHLCV data
+    - Detection and processing outliers  
+    - Feature engineering for crypto markets
+    - Preparation data in format Prophet
+    - Creation additional regressors
+    - Optimization performance
     """
     
     def __init__(
@@ -72,12 +72,12 @@ class CryptoDataProcessor(LoggerMixin):
         config: Optional[DataConfig] = None
     ):
         """
-        Инициализация процессора данных
+        Initialization processor data
         
         Args:
-            symbol: Символ криптовалюты
-            timeframe: Таймфрейм данных
-            config: Конфигурация обработки данных
+            symbol: Symbol cryptocurrency
+            timeframe: Timeframe data
+            config: Configuration processing data
         """
         super().__init__()
         
@@ -85,17 +85,17 @@ class CryptoDataProcessor(LoggerMixin):
         self.timeframe = timeframe.lower()
         self.config = config or get_config().data
         
-        # Установка контекста для логирования
+        # Installation context for logging
         self.set_log_context(
             symbol=self.symbol,
             timeframe=self.timeframe
         )
         
-        # Кэш для обработанных данных
+        # Cache for processed data
         self._cache: Dict[str, ProcessedData] = {}
         self._cache_timestamps: Dict[str, datetime] = {}
         
-        self.logger.info(f"Инициализирован CryptoDataProcessor для {self.symbol} ({self.timeframe})")
+        self.logger.info(f"Initialized CryptoDataProcessor for {self.symbol} ({self.timeframe})")
     
     @timed_operation("process_ohlcv_data")
     def process_ohlcv_data(
@@ -106,41 +106,41 @@ class CryptoDataProcessor(LoggerMixin):
         cache_key: Optional[str] = None
     ) -> ProcessedData:
         """
-        Основная функция обработки OHLCV данных
+        Main function processing OHLCV data
         
         Args:
-            data: Исходные OHLCV данные
-            target_column: Целевая колонка для прогнозирования
-            include_features: Создавать дополнительные признаки
-            cache_key: Ключ для кэширования результата
+            data: Original OHLCV data
+            target_column: Target column for forecasting
+            include_features: Create additional features
+            cache_key: Key for caching result
             
         Returns:
-            ProcessedData с подготовленными данными
+            ProcessedData with prepared data
             
         Raises:
-            DataProcessingException: При ошибке обработки
-            InvalidDataException: При невалидных данных
+            DataProcessingException: When error processing
+            InvalidDataException: When invalid data
         """
         try:
             self.log_operation_start("process_ohlcv_data", 
                                    target_column=target_column, 
                                    include_features=include_features)
             
-            # Проверка кэша
+            # Validation cache
             if cache_key and self._is_cache_valid(cache_key):
-                self.logger.debug(f"Возвращены данные из кэша: {cache_key}")
+                self.logger.debug(f"Returned data from cache: {cache_key}")
                 return self._cache[cache_key]
             
-            # Конвертация данных в DataFrame
+            # Conversion data in DataFrame
             df = self._to_dataframe(data)
             
-            # Валидация исходных данных
+            # Validation original data
             self._validate_input_data(df, target_column)
             
-            # Сохранение копии исходных данных
+            # Saving copies original data
             original_df = df.copy()
             
-            # Этапы обработки
+            # Stages processing
             metadata = {
                 'processing_steps': [],
                 'original_shape': df.shape,
@@ -150,20 +150,20 @@ class CryptoDataProcessor(LoggerMixin):
                 'processing_timestamp': datetime.now().isoformat()
             }
             
-            # 1. Нормализация временных меток
+            # 1. Normalization temporal labels
             df = self._normalize_timestamps(df)
             metadata['processing_steps'].append('normalize_timestamps')
             
-            # 2. Очистка данных
+            # 2. Cleanup data
             df = self._clean_data(df, target_column)
             metadata['processing_steps'].append('clean_data')
             
-            # 3. Обработка выбросов
+            # 3. Processing outliers
             df, outliers_info = self._handle_outliers(df, target_column)
             metadata['outliers_info'] = outliers_info
             metadata['processing_steps'].append('handle_outliers')
             
-            # 4. Создание базового Prophet DataFrame
+            # 4. Creation base Prophet DataFrame
             prophet_df = self._create_prophet_dataframe(df, target_column)
             metadata['processing_steps'].append('create_prophet_dataframe')
             
@@ -172,20 +172,20 @@ class CryptoDataProcessor(LoggerMixin):
             if include_features:
                 features_df = self._create_features(df, prophet_df)
                 
-                # Добавление признаков к Prophet данным
+                # Addition features to Prophet data
                 prophet_df = self._merge_features(prophet_df, features_df)
                 metadata['processing_steps'].append('create_features')
             
-            # 6. Финальная валидация
+            # 6. Final validation
             self._validate_processed_data(prophet_df, features_df)
             metadata['processing_steps'].append('validate_processed_data')
             
-            # 7. Оптимизация памяти
+            # 7. Optimization memory
             prophet_df, memory_stats = optimize_dataframe_memory(prophet_df)
             metadata['memory_optimization'] = memory_stats
             metadata['processing_steps'].append('optimize_memory')
             
-            # Финальные метаданные
+            # Final metadata
             metadata.update({
                 'final_shape': prophet_df.shape,
                 'features_count': len(features_df.columns) if not features_df.empty else 0,
@@ -196,7 +196,7 @@ class CryptoDataProcessor(LoggerMixin):
                 }
             })
             
-            # Создание результата
+            # Creation result
             result = ProcessedData(
                 prophet_df=prophet_df,
                 original_df=original_df,
@@ -204,7 +204,7 @@ class CryptoDataProcessor(LoggerMixin):
                 metadata=metadata
             )
             
-            # Кэширование
+            # Caching
             if cache_key:
                 self._cache_result(cache_key, result)
             
@@ -223,7 +223,7 @@ class CryptoDataProcessor(LoggerMixin):
             )
     
     def _to_dataframe(self, data: Union[pd.DataFrame, Dict, List[Dict]]) -> pd.DataFrame:
-        """Конвертация различных форматов данных в DataFrame"""
+        """Conversion various formats data in DataFrame"""
         if isinstance(data, pd.DataFrame):
             return data.copy()
         elif isinstance(data, dict):
@@ -234,11 +234,11 @@ class CryptoDataProcessor(LoggerMixin):
             raise InvalidDataException(f"Unsupported data type: {type(data)}")
     
     def _validate_input_data(self, df: pd.DataFrame, target_column: str):
-        """Валидация входных данных"""
-        # Базовая валидация OHLCV
+        """Validation input data"""
+        # Base validation OHLCV
         required_columns = ['timestamp', target_column]
         
-        # Проверка наличия временной колонки
+        # Validation presence temporal columns
         time_cols = ['timestamp', 'time', 'datetime', 'date', 'ds']
         time_col = None
         for col in time_cols:
@@ -249,14 +249,14 @@ class CryptoDataProcessor(LoggerMixin):
         if time_col is None:
             raise InvalidDataException("No timestamp column found. Expected one of: " + ", ".join(time_cols))
         
-        # Проверка целевой колонки
+        # Validation target columns
         if target_column not in df.columns:
             available_cols = ", ".join(df.columns.tolist())
             raise InvalidDataException(
                 f"Target column '{target_column}' not found. Available columns: {available_cols}"
             )
         
-        # Проверка минимального количества записей
+        # Validation minimum number entries
         min_records = self.config.min_history_days * (1440 // self._timeframe_to_minutes())
         if len(df) < min_records:
             raise InsufficientDataException(
@@ -268,7 +268,7 @@ class CryptoDataProcessor(LoggerMixin):
         self.logger.info(f"Input data validated: {len(df)} records, target='{target_column}'")
     
     def _timeframe_to_minutes(self) -> int:
-        """Конвертация таймфрейма в минуты"""
+        """Conversion timeframe in minutes"""
         timeframe_map = {
             '1m': 1, '5m': 5, '15m': 15, '30m': 30, '1h': 60,
             '2h': 120, '4h': 240, '6h': 360, '8h': 480, '12h': 720,
@@ -277,10 +277,10 @@ class CryptoDataProcessor(LoggerMixin):
         return timeframe_map.get(self.timeframe, 60)
     
     def _normalize_timestamps(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Нормализация временных меток"""
+        """Normalization temporal labels"""
         df = df.copy()
         
-        # Поиск колонки с временными метками
+        # Search columns with temporal labels
         time_cols = ['timestamp', 'time', 'datetime', 'date', 'ds']
         time_col = None
         for col in time_cols:
@@ -289,70 +289,70 @@ class CryptoDataProcessor(LoggerMixin):
                 break
         
         if time_col:
-            # Конвертация в datetime
+            # Conversion in datetime
             df[time_col] = pd.to_datetime(df[time_col])
             
-            # Переименование в 'ds' для Prophet
+            # Renaming in 'ds' for Prophet
             if time_col != 'ds':
                 df['ds'] = df[time_col]
-                if time_col != 'timestamp':  # Сохраняем исходную колонку
+                if time_col != 'timestamp':  # Save original column
                     df = df.drop(columns=[time_col])
         
-        # Сортировка по времени
+        # Sorting by time
         df = df.sort_values('ds').reset_index(drop=True)
         
-        # Проверка на дубликаты по времени
+        # Validation on duplicates by time
         if df['ds'].duplicated().any():
-            self.logger.warning("Найдены дубликаты временных меток, группируем по среднему")
+            self.logger.warning("Found duplicates temporal labels, group by average")
             numeric_cols = df.select_dtypes(include=[np.number]).columns
             agg_dict = {col: 'mean' for col in numeric_cols}
             df = df.groupby('ds').agg(agg_dict).reset_index()
         
-        self.logger.debug(f"Временные метки нормализованы: {len(df)} записей")
+        self.logger.debug(f"Temporal labels normalized: {len(df)} entries")
         return df
     
     def _clean_data(self, df: pd.DataFrame, target_column: str) -> pd.DataFrame:
-        """Очистка данных"""
+        """Cleanup data"""
         df = df.copy()
         initial_count = len(df)
         
-        # Удаление строк с пустой целевой колонкой
+        # Removal strings with empty target column
         df = df.dropna(subset=[target_column])
         
-        # Удаление нулевых и отрицательных цен
+        # Removal zero and negative prices
         if target_column in ['open', 'high', 'low', 'close']:
             df = df[df[target_column] > 0]
         
-        # Очистка числовых колонок
+        # Cleanup numeric columns
         numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
         if numeric_cols:
             df = clean_numeric_data(
                 df, 
                 columns=numeric_cols,
                 fill_method=self.config.missing_data_strategy,
-                remove_outliers=False  # Обработаем отдельно
+                remove_outliers=False  # Process separately
             )
         
-        # Удаление дубликатов
+        # Removal duplicates
         df = df.drop_duplicates(subset=['ds'], keep='first')
         
         cleaned_count = len(df)
         removed_count = initial_count - cleaned_count
         
         if removed_count > 0:
-            self.logger.info(f"Удалено {removed_count} записей при очистке данных")
+            self.logger.info(f"Removed {removed_count} entries when cleanup data")
         
         return df
     
     def _handle_outliers(self, df: pd.DataFrame, target_column: str) -> Tuple[pd.DataFrame, Dict]:
-        """Обработка выбросов"""
+        """Processing outliers"""
         if not self.config.outlier_detection:
             return df, {}
         
         df = df.copy()
         outliers_info = {}
         
-        # Детекция выбросов в целевой колонке
+        # Detection outliers in target column
         if len(df) > 10:
             outliers_mask, stats = detect_outliers_iqr(
                 df[target_column], 
@@ -364,15 +364,15 @@ class CryptoDataProcessor(LoggerMixin):
             if outliers_mask.any():
                 outlier_count = outliers_mask.sum()
                 self.logger.warning(
-                    f"Обнаружено {outlier_count} выбросов в колонке {target_column} "
+                    f"Detected {outlier_count} outliers in column {target_column} "
                     f"({stats['outliers_percentage']:.2f}%)"
                 )
                 
-                # Стратегии обработки выбросов
-                if stats['outliers_percentage'] < 5.0:  # Менее 5% - удаляем
+                # Strategies processing outliers
+                if stats['outliers_percentage'] < 5.0:  # Less 5% - remove
                     df = df[~outliers_mask]
                     outliers_info[target_column]['action'] = 'removed'
-                else:  # Слишком много - заменяем на границы
+                else:  # Too many - replace on boundaries
                     df.loc[outliers_mask & (df[target_column] < stats['lower_bound']), target_column] = stats['lower_bound']
                     df.loc[outliers_mask & (df[target_column] > stats['upper_bound']), target_column] = stats['upper_bound']
                     outliers_info[target_column]['action'] = 'capped'
@@ -380,60 +380,60 @@ class CryptoDataProcessor(LoggerMixin):
         return df, outliers_info
     
     def _create_prophet_dataframe(self, df: pd.DataFrame, target_column: str) -> pd.DataFrame:
-        """Создание DataFrame в формате Prophet"""
+        """Creation DataFrame in format Prophet"""
         prophet_df = pd.DataFrame()
         
-        # Обязательные колонки для Prophet
+        # Required columns for Prophet
         prophet_df['ds'] = df['ds']
         prophet_df['y'] = df[target_column]
         
-        # Добавление cap и floor для logistic growth (если нужно)
-        # Будет определяться в модели на основе конфигурации
+        # Addition cap and floor for logistic growth (if needed)
+        # Will be be determined in model on basis configuration
         
         return prophet_df
     
     @timed_operation("create_features")
     def _create_features(self, original_df: pd.DataFrame, prophet_df: pd.DataFrame) -> pd.DataFrame:
-        """Создание дополнительных признаков"""
+        """Creation additional features"""
         features_df = pd.DataFrame(index=prophet_df.index)
         
         try:
-            # 1. Временные признаки
+            # 1. Temporal features
             time_features = create_time_features(
                 prophet_df['ds'], 
                 features=['hour', 'day_of_week', 'day_of_month', 'month', 'is_weekend']
             )
             features_df = pd.concat([features_df, time_features], axis=1)
             
-            # 2. Технические индикаторы (если есть OHLCV данные)
+            # 2. Technical indicators (if exists OHLCV data)
             if all(col in original_df.columns for col in ['open', 'high', 'low', 'close', 'volume']):
                 tech_features = self._create_technical_indicators(original_df)
                 features_df = pd.concat([features_df, tech_features], axis=1)
             
-            # 3. Ценовые признаки
+            # 3. Price features
             price_features = self._create_price_features(prophet_df['y'])
             features_df = pd.concat([features_df, price_features], axis=1)
             
-            # 4. Волатильность
+            # 4. Volatility
             volatility_features = self._create_volatility_features(prophet_df['y'])
             features_df = pd.concat([features_df, volatility_features], axis=1)
             
-            # 5. Лаговые признаки
+            # 5. Lag features
             lag_features = self._create_lag_features(prophet_df['y'])
             features_df = pd.concat([features_df, lag_features], axis=1)
             
-            # Удаление NaN значений
+            # Removal NaN values
             features_df = features_df.fillna(method='ffill').fillna(method='bfill')
             
-            self.logger.info(f"Создано {len(features_df.columns)} признаков")
+            self.logger.info(f"Created {len(features_df.columns)} features")
             return features_df
             
         except Exception as e:
-            self.logger.error(f"Ошибка создания признаков: {e}")
-            return pd.DataFrame(index=prophet_df.index)  # Пустой DataFrame при ошибке
+            self.logger.error(f"Error creation features: {e}")
+            return pd.DataFrame(index=prophet_df.index)  # Empty DataFrame when error
     
     def _create_technical_indicators(self, df: pd.DataFrame, periods: List[int] = None) -> pd.DataFrame:
-        """Создание технических индикаторов"""
+        """Creation technical indicators"""
         if periods is None:
             periods = [14, 21, 50]
         
@@ -492,12 +492,12 @@ class CryptoDataProcessor(LoggerMixin):
                     indicators['vpt'] = vpt.cumsum()
             
         except Exception as e:
-            self.logger.warning(f"Ошибка создания технических индикаторов: {e}")
+            self.logger.warning(f"Error creation technical indicators: {e}")
         
         return indicators
     
     def _create_price_features(self, prices: pd.Series) -> pd.DataFrame:
-        """Создание ценовых признаков"""
+        """Creation price features"""
         features = pd.DataFrame(index=prices.index)
         
         try:
@@ -522,12 +522,12 @@ class CryptoDataProcessor(LoggerMixin):
                     features[f'z_score_{window}'] = (prices - rolling_mean) / rolling_std
                     
         except Exception as e:
-            self.logger.warning(f"Ошибка создания ценовых признаков: {e}")
+            self.logger.warning(f"Error creation price features: {e}")
         
         return features
     
     def _create_volatility_features(self, prices: pd.Series) -> pd.DataFrame:
-        """Создание признаков волатильности"""
+        """Creation features volatility"""
         features = pd.DataFrame(index=prices.index)
         
         try:
@@ -547,14 +547,14 @@ class CryptoDataProcessor(LoggerMixin):
                 features['realized_volatility'] = returns.abs()
             
         except Exception as e:
-            self.logger.warning(f"Ошибка создания признаков волатильности: {e}")
+            self.logger.warning(f"Error creation features volatility: {e}")
         
         return features
     
     def _create_lag_features(self, values: pd.Series, lags: List[int] = None) -> pd.DataFrame:
-        """Создание лаговых признаков"""
+        """Creation lag features"""
         if lags is None:
-            lags = [1, 2, 3, 7, 14]  # Адаптируется к таймфрейму
+            lags = [1, 2, 3, 7, 14]  # Adapts to timeframe
         
         features = pd.DataFrame(index=values.index)
         
@@ -566,52 +566,52 @@ class CryptoDataProcessor(LoggerMixin):
                     features[f'lag_ratio_{lag}'] = values / values.shift(lag)
             
         except Exception as e:
-            self.logger.warning(f"Ошибка создания лаговых признаков: {e}")
+            self.logger.warning(f"Error creation lag features: {e}")
         
         return features
     
     def _merge_features(self, prophet_df: pd.DataFrame, features_df: pd.DataFrame) -> pd.DataFrame:
-        """Объединение признаков с Prophet данными"""
+        """Merging features with Prophet data"""
         if features_df.empty:
             return prophet_df
         
-        # Убеждаемся, что индексы совпадают
+        # Ensure, that indices match
         if len(prophet_df) != len(features_df):
-            self.logger.warning(f"Несоответствие размеров: prophet_df={len(prophet_df)}, features_df={len(features_df)}")
-            # Обрезаем до минимального размера
+            self.logger.warning(f"Mismatch sizes: prophet_df={len(prophet_df)}, features_df={len(features_df)}")
+            # Trim until minimum size
             min_len = min(len(prophet_df), len(features_df))
             prophet_df = prophet_df.iloc[:min_len]
             features_df = features_df.iloc[:min_len]
         
-        # Объединяем по индексу
+        # Merge by index
         result = pd.concat([prophet_df, features_df], axis=1)
         
-        # Удаляем колонки с слишком многими NaN
-        threshold = len(result) * 0.1  # Более 90% NaN - удаляем
+        # Remove columns with too many NaN
+        threshold = len(result) * 0.1  # More 90% NaN - remove
         result = result.dropna(axis=1, thresh=int(threshold))
         
         return result
     
     def _validate_processed_data(self, prophet_df: pd.DataFrame, features_df: pd.DataFrame):
-        """Валидация обработанных данных"""
-        # Проверка обязательных колонок Prophet
+        """Validation processed data"""
+        # Validation required columns Prophet
         required_cols = ['ds', 'y']
         missing_cols = [col for col in required_cols if col not in prophet_df.columns]
         if missing_cols:
             raise DataProcessingException(f"Missing required Prophet columns: {missing_cols}")
         
-        # Проверка типов данных
+        # Validation types data
         if not pd.api.types.is_datetime64_any_dtype(prophet_df['ds']):
             raise DataProcessingException("Column 'ds' must be datetime type")
         
         if not pd.api.types.is_numeric_dtype(prophet_df['y']):
             raise DataProcessingException("Column 'y' must be numeric type")
         
-        # Проверка на NaN в ключевых колонках
+        # Validation on NaN in key columns
         if prophet_df[['ds', 'y']].isna().any().any():
             raise DataProcessingException("NaN values found in Prophet key columns")
         
-        # Проверка сортировки по времени
+        # Validation sorting by time
         if not prophet_df['ds'].is_monotonic_increasing:
             self.logger.warning("Data is not sorted by timestamp, sorting...")
             prophet_df.sort_values('ds', inplace=True)
@@ -620,23 +620,23 @@ class CryptoDataProcessor(LoggerMixin):
         self.logger.debug("Processed data validation successful")
     
     def _is_cache_valid(self, cache_key: str) -> bool:
-        """Проверка валидности кэша"""
+        """Validation validity cache"""
         if cache_key not in self._cache or cache_key not in self._cache_timestamps:
             return False
         
-        # Проверка TTL
+        # Validation TTL
         cache_age = datetime.now() - self._cache_timestamps[cache_key]
         max_age = timedelta(hours=self.config.cache_ttl_hours)
         
         return cache_age < max_age
     
     def _cache_result(self, cache_key: str, result: ProcessedData):
-        """Кэширование результата"""
+        """Caching result"""
         if self.config.cache_enabled:
             self._cache[cache_key] = result
             self._cache_timestamps[cache_key] = datetime.now()
             
-            # Ограничение размера кэша
+            # Limitation size cache
             max_cache_size = 10
             if len(self._cache) > max_cache_size:
                 oldest_key = min(self._cache_timestamps.keys(), 
@@ -652,16 +652,16 @@ class CryptoDataProcessor(LoggerMixin):
         cache_key: Optional[str] = None
     ) -> ProcessedData:
         """
-        Асинхронная обработка OHLCV данных
+        Asynchronous processing OHLCV data
         
         Args:
-            data: Исходные данные
-            target_column: Целевая колонка
-            include_features: Создавать признаки
-            cache_key: Ключ кэша
+            data: Original data
+            target_column: Target column
+            include_features: Create features
+            cache_key: Key cache
             
         Returns:
-            ProcessedData результат
+            ProcessedData result
         """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
@@ -671,13 +671,13 @@ class CryptoDataProcessor(LoggerMixin):
         )
     
     def clear_cache(self):
-        """Очистка кэша"""
+        """Cleanup cache"""
         self._cache.clear()
         self._cache_timestamps.clear()
         self.logger.debug("Cache cleared")
     
     def get_cache_stats(self) -> Dict[str, Any]:
-        """Статистика кэша"""
+        """Statistics cache"""
         return {
             'cache_size': len(self._cache),
             'cache_keys': list(self._cache.keys()),

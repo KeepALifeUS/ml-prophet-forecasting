@@ -18,14 +18,14 @@ from .exceptions import InvalidDataException
 
 logger = get_logger(__name__)
 
-# Поддерживаемые символы криптовалют
+# Supported symbols cryptocurrencies
 SUPPORTED_SYMBOLS = {
     "BTC", "ETH", "BNB", "ADA", "SOL", "XRP", "AVAX", "DOT", "MATIC", "LINK",
     "UNI", "AAVE", "SUSHI", "CRV", "YFI", "COMP", "MKR", "SNX", "1INCH", "ALPHA",
     "LTC", "BCH", "XLM", "ALGO", "ATOM", "FTM", "NEAR", "SAND", "MANA", "APE"
 }
 
-# Поддерживаемые таймфреймы
+# Supported timeframes
 SUPPORTED_TIMEFRAMES = {
     "1m": 1, "3m": 3, "5m": 5, "15m": 15, "30m": 30,
     "1h": 60, "2h": 120, "4h": 240, "6h": 360, "8h": 480, "12h": 720,
@@ -35,17 +35,17 @@ SUPPORTED_TIMEFRAMES = {
 
 def validate_symbol(symbol: str, raise_error: bool = True) -> bool:
     """
-    Валидация символа криптовалюты
+    Validation symbol cryptocurrency
     
     Args:
-        symbol: Символ для проверки (например, "BTC")
-        raise_error: Вызывать исключение при ошибке
+        symbol: Symbol for validation (for example, "BTC")
+        raise_error: Call exception when error
         
     Returns:
-        True если символ валиден
+        True if symbol valid
         
     Raises:
-        InvalidDataException: Если символ не поддерживается (при raise_error=True)
+        InvalidDataException: If symbol not is supported (when raise_error=True)
     """
     if not isinstance(symbol, str):
         if raise_error:
@@ -54,13 +54,13 @@ def validate_symbol(symbol: str, raise_error: bool = True) -> bool:
     
     symbol_upper = symbol.upper().strip()
     
-    # Проверка формата (2-10 символов, только буквы и цифры)
+    # Validation format (2-10 symbols, only letters and digits)
     if not re.match(r'^[A-Z0-9]{2,10}$', symbol_upper):
         if raise_error:
             raise InvalidDataException(f"Invalid symbol format: {symbol}")
         return False
     
-    # Проверка в списке поддерживаемых
+    # Validation in list supported
     if symbol_upper not in SUPPORTED_SYMBOLS:
         if raise_error:
             raise InvalidDataException(
@@ -73,17 +73,17 @@ def validate_symbol(symbol: str, raise_error: bool = True) -> bool:
 
 def validate_timeframe(timeframe: str, raise_error: bool = True) -> bool:
     """
-    Валидация таймфрейма
+    Validation timeframe
     
     Args:
-        timeframe: Таймфрейм для проверки (например, "1h")
-        raise_error: Вызывать исключение при ошибке
+        timeframe: Timeframe for validation (for example, "1h")
+        raise_error: Call exception when error
         
     Returns:
-        True если таймфрейм валиден
+        True if timeframe valid
         
     Raises:
-        InvalidDataException: Если таймфрейм не поддерживается
+        InvalidDataException: If timeframe not is supported
     """
     if not isinstance(timeframe, str):
         if raise_error:
@@ -105,16 +105,16 @@ def validate_timeframe(timeframe: str, raise_error: bool = True) -> bool:
 
 def parse_timeframe_to_minutes(timeframe: str) -> int:
     """
-    Конвертация таймфрейма в минуты
+    Conversion timeframe in minutes
     
     Args:
-        timeframe: Таймфрейм (например, "1h", "4h", "1d")
+        timeframe: Timeframe (for example, "1h", "4h", "1d")
         
     Returns:
-        Количество минут
+        Number minutes
         
     Raises:
-        InvalidDataException: При некорректном таймфрейме
+        InvalidDataException: When incorrect timeframe
     """
     validate_timeframe(timeframe)
     return SUPPORTED_TIMEFRAMES[timeframe.lower().strip()]
@@ -122,13 +122,13 @@ def parse_timeframe_to_minutes(timeframe: str) -> int:
 
 def parse_timeframe_to_seconds(timeframe: str) -> int:
     """
-    Конвертация таймфрейма в секунды
+    Conversion timeframe in seconds
     
     Args:
-        timeframe: Таймфрейм
+        timeframe: Timeframe
         
     Returns:
-        Количество секунд
+        Number seconds
     """
     minutes = parse_timeframe_to_minutes(timeframe)
     return minutes * 60
@@ -136,13 +136,13 @@ def parse_timeframe_to_seconds(timeframe: str) -> int:
 
 def parse_timeframe_to_timedelta(timeframe: str) -> timedelta:
     """
-    Конвертация таймфрейма в timedelta
+    Conversion timeframe in timedelta
     
     Args:
-        timeframe: Таймфрейм
+        timeframe: Timeframe
         
     Returns:
-        timedelta объект
+        timedelta object
     """
     minutes = parse_timeframe_to_minutes(timeframe)
     return timedelta(minutes=minutes)
@@ -150,13 +150,13 @@ def parse_timeframe_to_timedelta(timeframe: str) -> timedelta:
 
 def normalize_symbol(symbol: str) -> str:
     """
-    Нормализация символа криптовалюты
+    Normalization symbol cryptocurrency
     
     Args:
-        symbol: Исходный символ
+        symbol: Original symbol
         
     Returns:
-        Нормализованный символ (верхний регистр, без пробелов)
+        Normalized symbol (upper register, without spaces)
     """
     if not isinstance(symbol, str):
         raise InvalidDataException(f"Symbol must be string, got {type(symbol)}")
@@ -166,13 +166,13 @@ def normalize_symbol(symbol: str) -> str:
 
 def normalize_timeframe(timeframe: str) -> str:
     """
-    Нормализация таймфрейма
+    Normalization timeframe
     
     Args:
-        timeframe: Исходный таймфрейм
+        timeframe: Original timeframe
         
     Returns:
-        Нормализованный таймфрейм (нижний регистр, без пробелов)
+        Normalized timeframe (lower register, without spaces)
     """
     if not isinstance(timeframe, str):
         raise InvalidDataException(f"Timeframe must be string, got {type(timeframe)}")
@@ -185,17 +185,17 @@ def ensure_datetime(
     default_format: str = "%Y-%m-%d %H:%M:%S"
 ) -> datetime:
     """
-    Конвертация различных типов в datetime
+    Conversion various types in datetime
     
     Args:
-        value: Значение для конвертации
-        default_format: Формат для строк
+        value: Value for conversion
+        default_format: Format for strings
         
     Returns:
-        datetime объект
+        datetime object
         
     Raises:
-        InvalidDataException: При ошибке конвертации
+        InvalidDataException: When error conversion
     """
     try:
         if isinstance(value, datetime):
@@ -203,7 +203,7 @@ def ensure_datetime(
         elif isinstance(value, pd.Timestamp):
             return value.to_pydatetime()
         elif isinstance(value, str):
-            # Попытка парсинга в ISO формате сначала
+            # Attempt parsing in ISO format first
             try:
                 return pd.to_datetime(value).to_pydatetime()
             except:
@@ -223,15 +223,15 @@ def safe_divide(
     default: Union[int, float, None] = None
 ) -> Union[float, None]:
     """
-    Безопасное деление с обработкой деления на ноль
+    Safe division with processing division on zero
     
     Args:
-        numerator: Числитель
-        denominator: Знаменатель
-        default: Значение по умолчанию при делении на ноль
+        numerator: Numerator
+        denominator: Denominator
+        default: Value by default when division on zero
         
     Returns:
-        Результат деления или default значение
+        Result division or default value
     """
     try:
         if denominator == 0:
@@ -248,16 +248,16 @@ def format_number(
     thousands_sep: bool = True
 ) -> str:
     """
-    Форматирование числа для отображения
+    Formatting numbers for mapping
     
     Args:
-        value: Число для форматирования
-        precision: Количество знаков после запятой
-        percentage: Форматировать как процент
-        thousands_sep: Использовать разделитель тысяч
+        value: Number for formatting
+        precision: Number characters after comma
+        percentage: Format as percent
+        thousands_sep: Use separator thousands
         
     Returns:
-        Отформатированная строка
+        Formatted string
     """
     try:
         if value is None or math.isnan(float(value)):
@@ -284,19 +284,19 @@ def format_price(
     symbol: str = "USD"
 ) -> str:
     """
-    Форматирование цены с автоматическим выбором precision
+    Formatting price with automatic selection precision
     
     Args:
-        price: Цена
-        symbol: Символ валюты
+        price: Price
+        symbol: Symbol currencies
         
     Returns:
-        Отформатированная цена
+        Formatted price
     """
     try:
         price = float(price)
         
-        # Выбор precision на основе размера цены
+        # Selection precision on basis size price
         if price >= 1000:
             precision = 2
         elif price >= 1:
@@ -315,14 +315,14 @@ def format_price(
 
 def round_to_precision(value: Union[float, Decimal], precision: int = 8) -> Decimal:
     """
-    Округление до заданной точности с использованием Decimal
+    Rounding until specified accuracy with using Decimal
     
     Args:
-        value: Значение для округления
-        precision: Количество знаков после запятой
+        value: Value for rounding
+        precision: Number characters after comma
         
     Returns:
-        Округленное Decimal значение
+        Rounded Decimal value
     """
     try:
         decimal_value = Decimal(str(value))
@@ -337,14 +337,14 @@ def calculate_percentage_change(
     new_value: Union[int, float]
 ) -> float:
     """
-    Вычисление процентного изменения
+    Computation percentage changes
     
     Args:
-        old_value: Старое значение
-        new_value: Новое значение
+        old_value: Old value
+        new_value: New value
         
     Returns:
-        Процентное изменение (-100% до +∞%)
+        Percentage change (-100% until +∞%)
     """
     if old_value == 0:
         return 0.0 if new_value == 0 else float('inf')
@@ -354,50 +354,50 @@ def calculate_percentage_change(
 
 def validate_ohlcv_data(df: pd.DataFrame, required_cols: Optional[List[str]] = None) -> bool:
     """
-    Валидация OHLCV данных
+    Validation OHLCV data
     
     Args:
-        df: DataFrame с данными
-        required_cols: Обязательные колонки (по умолчанию OHLCV)
+        df: DataFrame with data
+        required_cols: Required columns (by default OHLCV)
         
     Returns:
-        True если данные валидны
+        True if data valid
         
     Raises:
-        InvalidDataException: При невалидных данных
+        InvalidDataException: When invalid data
     """
     if required_cols is None:
         required_cols = ['open', 'high', 'low', 'close', 'volume']
     
-    # Проверка наличия колонок
+    # Validation presence columns
     missing_cols = [col for col in required_cols if col not in df.columns]
     if missing_cols:
         raise InvalidDataException(f"Missing required columns: {missing_cols}")
     
-    # Проверка на пустоту
+    # Validation on void
     if df.empty:
         raise InvalidDataException("DataFrame is empty")
     
-    # Проверка типов данных
+    # Validation types data
     numeric_cols = ['open', 'high', 'low', 'close', 'volume']
     for col in numeric_cols:
         if col in df.columns:
             if not pd.api.types.is_numeric_dtype(df[col]):
                 raise InvalidDataException(f"Column {col} must be numeric")
     
-    # Проверка логики OHLC
+    # Validation logic OHLC
     if all(col in df.columns for col in ['open', 'high', 'low', 'close']):
-        # High должен быть >= max(open, close)
+        # High must be >= max(open, close)
         invalid_high = (df['high'] < df[['open', 'close']].max(axis=1)).any()
         if invalid_high:
             raise InvalidDataException("High price must be >= max(open, close)")
         
-        # Low должен быть <= min(open, close)  
+        # Low must be <= min(open, close)  
         invalid_low = (df['low'] > df[['open', 'close']].min(axis=1)).any()
         if invalid_low:
             raise InvalidDataException("Low price must be <= min(open, close)")
     
-    # Проверка на отрицательные значения
+    # Validation on negative values
     for col in numeric_cols:
         if col in df.columns:
             if (df[col] < 0).any():
@@ -411,14 +411,14 @@ def detect_outliers_iqr(
     multiplier: float = 1.5
 ) -> Tuple[pd.Series, Dict[str, float]]:
     """
-    Детекция выбросов методом IQR
+    Detection outliers method IQR
     
     Args:
-        series: Данные для анализа
-        multiplier: Множитель для IQR (обычно 1.5 или 3.0)
+        series: Data for analysis
+        multiplier: Multiplier for IQR (usually 1.5 or 3.0)
         
     Returns:
-        Tuple (mask выбросов, статистики)
+        Tuple (mask outliers, statistics)
     """
     Q1 = series.quantile(0.25)
     Q3 = series.quantile(0.75)
@@ -450,17 +450,17 @@ def clean_numeric_data(
     outlier_method: str = 'iqr'
 ) -> pd.DataFrame:
     """
-    Очистка числовых данных
+    Cleanup numeric data
     
     Args:
-        df: DataFrame для очистки
-        columns: Колонки для обработки (все числовые по умолчанию)
-        fill_method: Метод заполнения пропусков ('interpolate', 'forward', 'backward', 'median')
-        remove_outliers: Удалять выбросы
-        outlier_method: Метод детекции выбросов ('iqr', 'zscore')
+        df: DataFrame for cleanup
+        columns: Columns for processing (all numeric by default)
+        fill_method: Method filling gaps ('interpolate', 'forward', 'backward', 'median')
+        remove_outliers: Delete outliers
+        outlier_method: Method detection outliers ('iqr', 'zscore')
         
     Returns:
-        Очищенный DataFrame
+        Cleaned DataFrame
     """
     df_clean = df.copy()
     
@@ -471,7 +471,7 @@ def clean_numeric_data(
         if col not in df_clean.columns:
             continue
         
-        # Заполнение пропусков
+        # Filling gaps
         if df_clean[col].isna().any():
             if fill_method == 'interpolate':
                 df_clean[col] = df_clean[col].interpolate()
@@ -482,7 +482,7 @@ def clean_numeric_data(
             elif fill_method == 'median':
                 df_clean[col] = df_clean[col].fillna(df_clean[col].median())
         
-        # Удаление выбросов
+        # Removal outliers
         if remove_outliers and len(df_clean[col]) > 10:
             if outlier_method == 'iqr':
                 outliers_mask, _ = detect_outliers_iqr(df_clean[col])
@@ -501,14 +501,14 @@ def create_time_features(
     features: Optional[List[str]] = None
 ) -> pd.DataFrame:
     """
-    Создание временных признаков из timestamp
+    Creation temporal features from timestamp
     
     Args:
-        timestamps: Временные метки
-        features: Список признаков для создания
+        timestamps: Temporal labels
+        features: List features for creation
         
     Returns:
-        DataFrame с временными признаками
+        DataFrame with temporal features
     """
     if isinstance(timestamps, list):
         timestamps = pd.Series(timestamps)
@@ -548,26 +548,26 @@ def create_time_features(
 
 def memory_usage_mb(df: pd.DataFrame) -> float:
     """
-    Вычисление использования памяти DataFrame в мегабайтах
+    Computation usage memory DataFrame in megabytes
     
     Args:
-        df: DataFrame для анализа
+        df: DataFrame for analysis
         
     Returns:
-        Использование памяти в MB
+        Usage memory in MB
     """
     return df.memory_usage(deep=True).sum() / 1024 / 1024
 
 
 def optimize_dataframe_memory(df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[str, Any]]:
     """
-    Оптимизация использования памяти DataFrame
+    Optimization usage memory DataFrame
     
     Args:
-        df: DataFrame для оптимизации
+        df: DataFrame for optimization
         
     Returns:
-        Tuple (оптимизированный DataFrame, статистики)
+        Tuple (optimized DataFrame, statistics)
     """
     initial_memory = memory_usage_mb(df)
     df_optimized = df.copy()
@@ -582,7 +582,7 @@ def optimize_dataframe_memory(df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[str,
         col_type = df_optimized[col].dtype
         
         if pd.api.types.is_integer_dtype(col_type):
-            # Оптимизация целых чисел
+            # Optimization integer numbers
             c_min = df_optimized[col].min()
             c_max = df_optimized[col].max()
             
@@ -597,7 +597,7 @@ def optimize_dataframe_memory(df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[str,
             stats['optimization_details'][col] = f"{col_type} -> {df_optimized[col].dtype}"
         
         elif pd.api.types.is_float_dtype(col_type):
-            # Оптимизация чисел с плавающей точкой
+            # Optimization numbers with floating point
             c_min = df_optimized[col].min()
             c_max = df_optimized[col].max()
             

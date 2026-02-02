@@ -25,11 +25,11 @@ from src.utils.exceptions import (
 
 @pytest.fixture
 def sample_ohlcv_data():
-    """Создание тестовых OHLCV данных"""
+    """Creation test OHLCV data"""
     dates = pd.date_range(start='2023-01-01', end='2023-12-31', freq='D')
     n_points = len(dates)
     
-    # Генерация реалистичных OHLCV данных
+    # Generation realistic OHLCV data
     np.random.seed(42)
     base_price = 50000
     price_walk = np.cumsum(np.random.randn(n_points) * 0.02) + base_price
@@ -59,13 +59,13 @@ def sample_ohlcv_data():
 
 @pytest.fixture
 def prophet_config():
-    """Тестовая конфигурация Prophet"""
+    """Test configuration Prophet"""
     return ProphetConfig()
 
 
 @pytest.fixture
 def prophet_model(prophet_config):
-    """Тестовая модель Prophet"""
+    """Test model Prophet"""
     return ProphetForecaster(
         symbol="BTC",
         timeframe="1d",
@@ -74,10 +74,10 @@ def prophet_model(prophet_config):
 
 
 class TestProphetForecaster:
-    """Tests for класса ProphetForecaster"""
+    """Tests for class ProphetForecaster"""
     
     def test_initialization(self, prophet_config):
-        """Тест инициализации модели"""
+        """Test initialization model"""
         model = ProphetForecaster(
             symbol="eth",
             timeframe="4h",
@@ -92,7 +92,7 @@ class TestProphetForecaster:
         assert model.training_data is None
     
     def test_initialization_without_config(self):
-        """Тест инициализации без конфигурации"""
+        """Test initialization without configuration"""
         model = ProphetForecaster(symbol="BTC", timeframe="1h")
         
         assert model.symbol == "BTC"
@@ -101,26 +101,26 @@ class TestProphetForecaster:
         assert isinstance(model.config, ProphetConfig)
     
     def test_create_prophet_model(self, prophet_model):
-        """Тест создания Prophet модели"""
+        """Test creation Prophet model"""
         model = prophet_model._create_prophet_model()
         
         assert model is not None
         assert hasattr(model, 'fit')
         assert hasattr(model, 'predict')
         
-        # Проверка параметров
+        # Validation parameters
         assert model.growth == prophet_model.model_config.growth.value
         assert model.seasonality_mode == prophet_model.model_config.seasonality_mode.value
     
     def test_validate_training_data_valid(self, prophet_model, sample_ohlcv_data):
-        """Тест валидации корректных данных"""
-        # Подготовка данных в формате Prophet
+        """Test validation correct data"""
+        # Preparation data in format Prophet
         df = pd.DataFrame({
             'ds': sample_ohlcv_data['timestamp'],
             'y': sample_ohlcv_data['close']
         })
         
-        # Должно пройти без исключений
+        # Must pass without exceptions
         validated_df = prophet_model._validate_training_data(df)
         
         assert not validated_df.empty
@@ -129,7 +129,7 @@ class TestProphetForecaster:
         assert len(validated_df) > 0
     
     def test_validate_training_data_missing_columns(self, prophet_model):
-        """Тест валидации данных с отсутствующими колонками"""
+        """Test validation data with missing columns"""
         df = pd.DataFrame({'only_one_column': [1, 2, 3]})
         
         with pytest.raises(InvalidDataException) as exc_info:
@@ -138,7 +138,7 @@ class TestProphetForecaster:
         assert "missing required columns" in str(exc_info.value).lower()
     
     def test_validate_training_data_insufficient_data(self, prophet_model):
-        """Тест валидации недостаточного количества данных"""
+        """Test validation insufficient number data"""
         df = pd.DataFrame({
             'ds': pd.date_range('2023-01-01', periods=5, freq='D'),
             'y': [1, 2, 3, 4, 5]
@@ -150,31 +150,31 @@ class TestProphetForecaster:
         assert "insufficient data" in str(exc_info.value).lower()
     
     def test_train_model_success(self, prophet_model, sample_ohlcv_data):
-        """Тест успешного обучения модели"""
-        # Подготовка данных
+        """Test successful training model"""
+        # Preparation data
         training_data = pd.DataFrame({
             'ds': sample_ohlcv_data['timestamp'],
             'y': sample_ohlcv_data['close']
         })
         
-        # Обучение модели
-        metrics = prophet_model.train(training_data, validate=False)  # Отключаем CV для скорости
+        # Training model
+        metrics = prophet_model.train(training_data, validate=False)  # Disable CV for speed
         
-        # Проверки
+        # Validation
         assert prophet_model.is_trained
         assert prophet_model.model is not None
         assert prophet_model.training_data is not None
         assert prophet_model.last_training_time is not None
         
-        # Проверка метрик
+        # Validation metrics
         assert isinstance(metrics, dict)
         assert 'training_time_seconds' in metrics
         assert 'training_samples' in metrics
         assert metrics['training_samples'] == len(training_data)
     
     def test_train_model_with_regressors(self, prophet_model, sample_ohlcv_data):
-        """Тест обучения с дополнительными регрессорами"""
-        # Подготовка данных с регрессорами
+        """Test training with additional regressors"""
+        # Preparation data with regressors
         training_data = pd.DataFrame({
             'ds': sample_ohlcv_data['timestamp'],
             'y': sample_ohlcv_data['close'],
@@ -198,7 +198,7 @@ class TestProphetForecaster:
     
     @pytest.mark.asyncio
     async def test_train_model_with_validation(self, prophet_model, sample_ohlcv_data):
-        """Тест обучения с кросс-валидацией"""
+        """Test training with cross-validation"""
         training_data = pd.DataFrame({
             'ds': sample_ohlcv_data['timestamp'],
             'y': sample_ohlcv_data['close']
@@ -207,56 +207,56 @@ class TestProphetForecaster:
         metrics = prophet_model.train(training_data, validate=True)
         
         assert prophet_model.is_trained
-        assert 'cv_mae' in metrics or 'training_time_seconds' in metrics  # CV может не работать на малых данных
+        assert 'cv_mae' in metrics or 'training_time_seconds' in metrics  # CV can not work on small data
     
     def test_train_model_invalid_data(self, prophet_model):
-        """Тест обучения с некорректными данными"""
+        """Test training with incorrect data"""
         invalid_data = pd.DataFrame({'wrong_columns': [1, 2, 3]})
         
         with pytest.raises(ModelTrainingException):
             prophet_model.train(invalid_data)
     
     def test_predict_without_training(self, prophet_model):
-        """Тест прогнозирования без обучения"""
+        """Test forecasting without training"""
         with pytest.raises(ModelNotTrainedException):
             prophet_model.predict(periods=10)
     
     def test_predict_success(self, prophet_model, sample_ohlcv_data):
-        """Тест успешного прогнозирования"""
-        # Обучение модели
+        """Test successful forecasting"""
+        # Training model
         training_data = pd.DataFrame({
             'ds': sample_ohlcv_data['timestamp'],
             'y': sample_ohlcv_data['close']
         })
         prophet_model.train(training_data, validate=False)
         
-        # Прогнозирование
+        # Forecasting
         forecast_result = prophet_model.predict(periods=30)
         
-        # Проверки
+        # Validation
         assert isinstance(forecast_result, ForecastResult)
         assert forecast_result.symbol == "BTC"
         assert forecast_result.timeframe == "1d"
         assert len(forecast_result.forecast_df) == 30
         
-        # Проверка обязательных колонок
+        # Validation required columns
         assert 'ds' in forecast_result.forecast_df.columns
         assert 'yhat' in forecast_result.forecast_df.columns
         
-        # Проверка метрик
+        # Validation metrics
         assert isinstance(forecast_result.metrics, dict)
         assert len(forecast_result.changepoints) >= 0
     
     def test_predict_with_future_data(self, prophet_model, sample_ohlcv_data):
-        """Тест прогнозирования с предопределенными данными"""
-        # Обучение
+        """Test forecasting with predefined data"""
+        # Training
         training_data = pd.DataFrame({
             'ds': sample_ohlcv_data['timestamp'],
             'y': sample_ohlcv_data['close']
         })
         prophet_model.train(training_data, validate=False)
         
-        # Создание будущих данных
+        # Creation future data
         future_dates = pd.date_range(
             start=sample_ohlcv_data['timestamp'].max() + timedelta(days=1),
             periods=10,
@@ -264,7 +264,7 @@ class TestProphetForecaster:
         )
         future_data = pd.DataFrame({'ds': future_dates})
         
-        # Прогнозирование
+        # Forecasting
         forecast_result = prophet_model.predict(future_data=future_data)
         
         assert len(forecast_result.forecast_df) == 10
@@ -272,68 +272,68 @@ class TestProphetForecaster:
     
     @pytest.mark.asyncio
     async def test_predict_async(self, prophet_model, sample_ohlcv_data):
-        """Тест асинхронного прогнозирования"""
-        # Обучение
+        """Test asynchronous forecasting"""
+        # Training
         training_data = pd.DataFrame({
             'ds': sample_ohlcv_data['timestamp'],
             'y': sample_ohlcv_data['close']
         })
         prophet_model.train(training_data, validate=False)
         
-        # Асинхронное прогнозирование
+        # Asynchronous forecasting
         forecast_result = await prophet_model.predict_async(periods=15)
         
         assert isinstance(forecast_result, ForecastResult)
         assert len(forecast_result.forecast_df) == 15
     
     def test_save_and_load_model(self, prophet_model, sample_ohlcv_data, tmp_path):
-        """Тест сохранения и загрузки модели"""
-        # Обучение модели
+        """Test saving and loading model"""
+        # Training model
         training_data = pd.DataFrame({
             'ds': sample_ohlcv_data['timestamp'],
             'y': sample_ohlcv_data['close']
         })
         prophet_model.train(training_data, validate=False)
         
-        # Сохранение
+        # Saving
         model_path = tmp_path / "test_model.pkl"
         prophet_model.save_model(model_path)
         
         assert model_path.exists()
         
-        # Создание новой модели и загрузка
+        # Creation new model and loading
         new_model = ProphetForecaster(symbol="BTC", timeframe="1d")
         new_model.load_model(model_path)
         
-        # Проверки
+        # Validation
         assert new_model.is_trained
         assert new_model.symbol == prophet_model.symbol
         assert new_model.timeframe == prophet_model.timeframe
         
-        # Проверка работоспособности
+        # Validation operability
         forecast = new_model.predict(periods=5)
         assert len(forecast.forecast_df) == 5
     
     def test_save_model_not_trained(self, prophet_model, tmp_path):
-        """Тест сохранения необученной модели"""
+        """Test saving untrained model"""
         model_path = tmp_path / "test_model.pkl"
         
         with pytest.raises(ModelNotTrainedException):
             prophet_model.save_model(model_path)
     
     def test_load_model_file_not_found(self, prophet_model):
-        """Тест загрузки несуществующего файла"""
+        """Test loading non-existent file"""
         with pytest.raises(FileNotFoundError):
             prophet_model.load_model("nonexistent_file.pkl")
     
     def test_get_model_info(self, prophet_model, sample_ohlcv_data):
-        """Тест получения информации о модели"""
-        # До обучения
+        """Test retrieval information about model"""
+        # Until training
         info_before = prophet_model.get_model_info()
         assert not info_before['is_trained']
         assert info_before['training_data_size'] == 0
         
-        # После обучения
+        # After training
         training_data = pd.DataFrame({
             'ds': sample_ohlcv_data['timestamp'],
             'y': sample_ohlcv_data['close']
@@ -348,8 +348,8 @@ class TestProphetForecaster:
         assert 'last_training_time' in info_after
     
     def test_plot_forecast(self, prophet_model, sample_ohlcv_data):
-        """Тест создания графика прогноза"""
-        # Обучение и прогнозирование
+        """Test creation chart forecast"""
+        # Training and forecasting
         training_data = pd.DataFrame({
             'ds': sample_ohlcv_data['timestamp'],
             'y': sample_ohlcv_data['close']
@@ -357,16 +357,16 @@ class TestProphetForecaster:
         prophet_model.train(training_data, validate=False)
         forecast_result = prophet_model.predict(periods=30)
         
-        # Создание графика
+        # Creation chart
         fig = prophet_model.plot_forecast(forecast_result, show_components=True)
         
         assert fig is not None
         assert hasattr(fig, 'data')  # Plotly Figure object
-        assert len(fig.data) > 0  # Есть данные для отображения
+        assert len(fig.data) > 0  # Exists data for mapping
     
     def test_convert_seasonality_parameters(self, prophet_model):
-        """Тест конвертации параметров сезонности"""
-        # Тест различных типов параметров
+        """Test conversion parameters seasonality"""
+        # Test various types parameters
         assert prophet_model._convert_seasonality("auto") == "auto"
         assert prophet_model._convert_seasonality(True) == True
         assert prophet_model._convert_seasonality(False) == False
@@ -375,10 +375,10 @@ class TestProphetForecaster:
 
 
 class TestForecastResult:
-    """Tests for класса ForecastResult"""
+    """Tests for class ForecastResult"""
     
     def test_forecast_result_creation(self):
-        """Тест создания ForecastResult"""
+        """Test creation ForecastResult"""
         df = pd.DataFrame({
             'ds': pd.date_range('2024-01-01', periods=10, freq='D'),
             'yhat': np.random.randn(10) * 100 + 50000,
@@ -405,7 +405,7 @@ class TestForecastResult:
         assert "mae" in result.metrics
     
     def test_forecast_result_to_dict(self):
-        """Тест конвертации ForecastResult в словарь"""
+        """Test conversion ForecastResult in dictionary"""
         df = pd.DataFrame({
             'ds': pd.date_range('2024-01-01', periods=5, freq='D'),
             'yhat': [50000, 50100, 50200, 50300, 50400]
@@ -435,32 +435,32 @@ class TestForecastResult:
 
 
 class TestIntegrationProphetModel:
-    """Интеграционные тесты"""
+    """Integration tests"""
     
     @pytest.mark.integration
     def test_full_workflow(self, sample_ohlcv_data):
-        """Тест полного workflow: создание → обучение → прогноз → сохранение"""
-        # 1. Создание модели
+        """Test full workflow: creation → training → forecast → saving"""
+        # 1. Creation model
         model = ProphetForecaster(symbol="BTC", timeframe="1d")
         assert not model.is_trained
         
-        # 2. Подготовка данных
+        # 2. Preparation data
         training_data = pd.DataFrame({
             'ds': sample_ohlcv_data['timestamp'],
             'y': sample_ohlcv_data['close']
         })
         
-        # 3. Обучение
+        # 3. Training
         training_metrics = model.train(training_data, validate=False)
         assert model.is_trained
         assert isinstance(training_metrics, dict)
         
-        # 4. Прогнозирование
+        # 4. Forecasting
         forecast = model.predict(periods=14)
         assert isinstance(forecast, ForecastResult)
         assert len(forecast.forecast_df) == 14
         
-        # 5. Информация о модели
+        # 5. Information about model
         model_info = model.get_model_info()
         assert model_info['is_trained']
         assert model_info['symbol'] == "BTC"
@@ -468,7 +468,7 @@ class TestIntegrationProphetModel:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_async_workflow(self, sample_ohlcv_data):
-        """Тест асинхронного workflow"""
+        """Test asynchronous workflow"""
         model = ProphetForecaster(symbol="ETH", timeframe="4h")
         
         training_data = pd.DataFrame({
@@ -476,10 +476,10 @@ class TestIntegrationProphetModel:
             'y': sample_ohlcv_data['close']
         })
         
-        # Обучение (синхронное)
+        # Training (synchronous)
         model.train(training_data, validate=False)
         
-        # Асинхронное прогнозирование
+        # Asynchronous forecasting
         forecast = await model.predict_async(periods=7)
         
         assert isinstance(forecast, ForecastResult)
@@ -489,11 +489,11 @@ class TestIntegrationProphetModel:
 
 
 class TestProphetModelPerformance:
-    """Тесты производительности"""
+    """Tests performance"""
     
     @pytest.mark.performance
     def test_training_performance(self, sample_ohlcv_data):
-        """Тест производительности обучения"""
+        """Test performance training"""
         model = ProphetForecaster(symbol="BTC", timeframe="1d")
         
         training_data = pd.DataFrame({
@@ -507,33 +507,33 @@ class TestProphetModelPerformance:
         
         training_time = (end_time - start_time).total_seconds()
         
-        # Обучение должно занимать разумное время
-        assert training_time < 30  # Максимум 30 секунд
+        # Training must occupy reasonable time
+        assert training_time < 30  # Maximum 30 seconds
         assert metrics['training_time_seconds'] < 30
         
-        # Проверка использования памяти (приблизительно)
+        # Validation usage memory (approximately)
         assert model.training_data is not None
         assert len(model.training_data) == len(training_data)
     
     @pytest.mark.performance 
     def test_prediction_performance(self, sample_ohlcv_data):
-        """Тест производительности прогнозирования"""
+        """Test performance forecasting"""
         model = ProphetForecaster(symbol="BTC", timeframe="1d")
         
-        # Обучение
+        # Training
         training_data = pd.DataFrame({
             'ds': sample_ohlcv_data['timestamp'],
             'y': sample_ohlcv_data['close']
         })
         model.train(training_data, validate=False)
         
-        # Тест прогнозирования
+        # Test forecasting
         start_time = datetime.now()
-        forecast = model.predict(periods=90)  # 3 месяца
+        forecast = model.predict(periods=90)  # 3 months
         end_time = datetime.now()
         
         prediction_time = (end_time - start_time).total_seconds()
         
-        # Прогнозирование должно быть быстрым
-        assert prediction_time < 5  # Максимум 5 секунд
+        # Forecasting must be fast
+        assert prediction_time < 5  # Maximum 5 seconds
         assert len(forecast.forecast_df) == 90

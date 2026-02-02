@@ -16,7 +16,7 @@ from pydantic.types import PositiveInt, PositiveFloat, confloat
 
 
 class LogLevel(str, Enum):
-    """Уровни логирования"""
+    """Levels logging"""
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
@@ -25,20 +25,20 @@ class LogLevel(str, Enum):
 
 
 class SeasonalityMode(str, Enum):
-    """Режимы сезонности Prophet"""
+    """Modes seasonality Prophet"""
     ADDITIVE = "additive"
     MULTIPLICATIVE = "multiplicative"
 
 
 class GrowthMode(str, Enum):
-    """Режимы роста Prophet"""
+    """Modes growth Prophet"""
     LINEAR = "linear"
     LOGISTIC = "logistic"
     FLAT = "flat"
 
 
 class OptimizationMethod(str, Enum):
-    """Методы оптимизации гиперпараметров"""
+    """Methods optimization hyperparameters"""
     BAYESIAN = "bayesian"
     GRID_SEARCH = "grid_search"
     RANDOM_SEARCH = "random_search"
@@ -47,83 +47,83 @@ class OptimizationMethod(str, Enum):
 
 class ModelConfig(BaseSettings):
     """
-    Конфигурация модели Prophet с enterprise настройками
+    Configuration model Prophet with enterprise settings
     """
     
-    # === Основные параметры Prophet ===
+    # === Main parameters Prophet ===
     growth: GrowthMode = Field(
         default=GrowthMode.LINEAR,
-        description="Тип роста тренда"
+        description="Type growth trend"
     )
     
     seasonality_mode: SeasonalityMode = Field(
         default=SeasonalityMode.ADDITIVE,
-        description="Режим сезонности"
+        description="Mode seasonality"
     )
     
     changepoint_prior_scale: PositiveFloat = Field(
         default=0.05,
         ge=0.001,
         le=0.5,
-        description="Гибкость изменения трендов"
+        description="Flexibility changes trends"
     )
     
     seasonality_prior_scale: PositiveFloat = Field(
         default=10.0,
         ge=0.01,
         le=100.0,
-        description="Сила сезонности"
+        description="Force seasonality"
     )
     
     holidays_prior_scale: PositiveFloat = Field(
         default=10.0,
         ge=0.01,
         le=100.0,
-        description="Влияние праздников"
+        description="Influence holidays"
     )
     
     daily_seasonality: Union[bool, str, int] = Field(
         default="auto",
-        description="Дневная сезонность"
+        description="Daily seasonality"
     )
     
     weekly_seasonality: Union[bool, str, int] = Field(
         default="auto", 
-        description="Недельная сезонность"
+        description="Weekly seasonality"
     )
     
     yearly_seasonality: Union[bool, str, int] = Field(
         default="auto",
-        description="Годовая сезонность"
+        description="Annual seasonality"
     )
     
-    # === Точки изменения ===
+    # === Points changes ===
     n_changepoints: PositiveInt = Field(
         default=25,
         ge=1,
         le=100,
-        description="Количество точек изменения"
+        description="Number points changes"
     )
     
     changepoint_range: confloat(gt=0, le=1) = Field(
         default=0.8,
-        description="Доля истории для поиска changepoints"
+        description="Share history for search changepoints"
     )
     
-    # === Интервалы неопределенности ===
+    # === Intervals uncertainty ===
     interval_width: confloat(gt=0, lt=1) = Field(
         default=0.8,
-        description="Ширина доверительного интервала"
+        description="Width confidence interval"
     )
     
     uncertainty_samples: PositiveInt = Field(
         default=1000,
         ge=100,
         le=10000,
-        description="Количество сэмплов для неопределенности"
+        description="Number samples for uncertainty"
     )
     
-    # === Кастомная сезонность ===
+    # === Custom seasonality ===
     custom_seasonalities: List[Dict[str, Any]] = Field(
         default_factory=lambda: [
             {
@@ -134,21 +134,21 @@ class ModelConfig(BaseSettings):
             },
             {
                 "name": "crypto_weekly", 
-                "period": 168,  # 24*7 часов
+                "period": 168,  # 24*7 hours
                 "fourier_order": 10,
                 "mode": "additive"
             },
             {
                 "name": "crypto_monthly",
-                "period": 720,  # 24*30 часов
+                "period": 720,  # 24*30 hours
                 "fourier_order": 5,
                 "mode": "additive"
             }
         ],
-        description="Кастомная сезонность для крипто рынков"
+        description="Custom seasonality for crypto markets"
     )
     
-    # === Регрессоры ===
+    # === Regressors ===
     additional_regressors: List[str] = Field(
         default_factory=lambda: [
             "volume_ma",
@@ -158,14 +158,14 @@ class ModelConfig(BaseSettings):
             "sentiment_score",
             "btc_dominance"
         ],
-        description="Дополнительные регрессоры"
+        description="Additional regressors"
     )
     
-    # === Валидация ===
+    # === Validation ===
     
     @validator('daily_seasonality', 'weekly_seasonality', 'yearly_seasonality')
     def validate_seasonality(cls, v):
-        """Валидация параметров сезонности"""
+        """Validation parameters seasonality"""
         if isinstance(v, str) and v not in ["auto"]:
             raise ValueError("String seasonality must be 'auto'")
         if isinstance(v, int) and v < 0:
@@ -179,76 +179,76 @@ class ModelConfig(BaseSettings):
 
 class DataConfig(BaseSettings):
     """
-    Конфигурация обработки данных
+    Configuration processing data
     """
     
-    # === Источники данных ===
+    # === Sources data ===
     default_exchange: str = Field(
         default="binance",
-        description="Биржа по умолчанию"
+        description="Exchange by default"
     )
     
     supported_exchanges: List[str] = Field(
         default_factory=lambda: ["binance", "coinbase", "kraken", "okx"],
-        description="Поддерживаемые биржи"
+        description="Supported exchange"
     )
     
-    # === Параметры данных ===
+    # === Parameters data ===
     min_history_days: PositiveInt = Field(
         default=365,
         ge=30,
         le=3650,
-        description="Минимум дней истории"
+        description="Minimum days history"
     )
     
     max_history_days: PositiveInt = Field(
-        default=1095,  # 3 года
+        default=1095,  # 3 year
         ge=365,
         le=3650,
-        description="Максимум дней истории"
+        description="Maximum days history"
     )
     
     forecast_horizon_days: PositiveInt = Field(
         default=30,
         ge=1,
         le=365,
-        description="Горизонт прогноза в днях"
+        description="Horizon forecast in days"
     )
     
-    # === Обработка данных ===
+    # === Processing data ===
     outlier_detection: bool = Field(
         default=True,
-        description="Включить детекцию выбросов"
+        description="Enable detection outliers"
     )
     
     outlier_threshold: PositiveFloat = Field(
         default=3.0,
         ge=1.0,
         le=5.0,
-        description="Порог для выбросов (в std)"
+        description="Threshold for outliers (in std)"
     )
     
     missing_data_strategy: Literal["interpolate", "forward_fill", "drop", "median"] = Field(
         default="interpolate",
-        description="Стратегия для пропущенных данных"
+        description="Strategy for missing data"
     )
     
     data_validation: bool = Field(
         default=True,
-        description="Включить валидацию данных"
+        description="Enable validation data"
     )
     
-    # === Кэширование ===
+    # === Caching ===
     cache_enabled: bool = Field(
         default=True,
-        description="Включить кэширование данных"
+        description="Enable caching data"
     )
     
     cache_ttl_hours: PositiveInt = Field(
         default=6,
         ge=1,
         le=168,
-        description="TTL кэша в часах"
+        description="TTL cache in hours"
     )
     
     class Config:
@@ -258,33 +258,33 @@ class DataConfig(BaseSettings):
 
 class APIConfig(BaseSettings):
     """
-    Конфигурация API сервера
+    Configuration API server
     """
     
-    # === Сервер ===
-    host: str = Field(default="0.0.0.0", description="Хост API")
-    port: PositiveInt = Field(default=8000, ge=1000, le=65535, description="Порт API")
-    debug: bool = Field(default=False, description="Режим отладки")
+    # === Server ===
+    host: str = Field(default="0.0.0.0", description="Host API")
+    port: PositiveInt = Field(default=8000, ge=1000, le=65535, description="Port API")
+    debug: bool = Field(default=False, description="Mode debugging")
     
     # === CORS ===
     cors_origins: List[str] = Field(
         default_factory=lambda: ["http://localhost:3000", "http://localhost:8080"],
-        description="Разрешенные CORS origins"
+        description="Allowed CORS origins"
     )
     
     # === Rate Limiting ===
-    rate_limit_enabled: bool = Field(default=True, description="Включить rate limiting")
-    rate_limit_requests: PositiveInt = Field(default=100, description="Запросов в минуту")
-    rate_limit_window: PositiveInt = Field(default=60, description="Окно в секундах")
+    rate_limit_enabled: bool = Field(default=True, description="Enable rate limiting")
+    rate_limit_requests: PositiveInt = Field(default=100, description="Requests in minute")
+    rate_limit_window: PositiveInt = Field(default=60, description="Window in seconds")
     
     # === WebSocket ===
-    websocket_enabled: bool = Field(default=True, description="Включить WebSocket")
-    websocket_max_connections: PositiveInt = Field(default=100, description="Макс подключений")
+    websocket_enabled: bool = Field(default=True, description="Enable WebSocket")
+    websocket_max_connections: PositiveInt = Field(default=100, description="Max connections")
     
-    # === Аутентификация ===
-    auth_enabled: bool = Field(default=False, description="Включить аутентификацию")
-    auth_secret_key: Optional[str] = Field(default=None, description="Секретный ключ")
-    auth_algorithm: str = Field(default="HS256", description="Алгоритм JWT")
+    # === Authentication ===
+    auth_enabled: bool = Field(default=False, description="Enable authentication")
+    auth_secret_key: Optional[str] = Field(default=None, description="Secret key")
+    auth_algorithm: str = Field(default="HS256", description="Algorithm JWT")
     
     class Config:
         env_prefix = "PROPHET_API_"
@@ -293,36 +293,36 @@ class APIConfig(BaseSettings):
 
 class OptimizationConfig(BaseSettings):
     """
-    Конфигурация оптимизации гиперпараметров
+    Configuration optimization hyperparameters
     """
     
     method: OptimizationMethod = Field(
         default=OptimizationMethod.BAYESIAN,
-        description="Метод оптимизации"
+        description="Method optimization"
     )
     
     n_trials: PositiveInt = Field(
         default=100,
         ge=10,
         le=1000,
-        description="Количество испытаний"
+        description="Number trials"
     )
     
     timeout_hours: PositiveFloat = Field(
         default=2.0,
         ge=0.1,
         le=24.0,
-        description="Таймаут в часах"
+        description="Timeout in hours"
     )
     
     cv_folds: PositiveInt = Field(
         default=5,
         ge=2,
         le=10,
-        description="Количество фолдов для кросс-валидации"
+        description="Number folds for cross-validation"
     )
     
-    # === Параметры для оптимизации ===
+    # === Parameters for optimization ===
     param_space: Dict[str, Dict[str, Any]] = Field(
         default_factory=lambda: {
             "changepoint_prior_scale": {"low": 0.001, "high": 0.5, "type": "float"},
@@ -331,13 +331,13 @@ class OptimizationConfig(BaseSettings):
             "n_changepoints": {"low": 5, "high": 50, "type": "int"},
             "changepoint_range": {"low": 0.6, "high": 0.95, "type": "float"}
         },
-        description="Пространство параметров для оптимизации"
+        description="Space parameters for optimization"
     )
     
-    # === Метрики для оптимизации ===
+    # === Metrics for optimization ===
     optimization_metric: Literal["mape", "mae", "rmse", "smape"] = Field(
         default="mape",
-        description="Метрика для оптимизации"
+        description="Metric for optimization"
     )
     
     class Config:
@@ -347,25 +347,25 @@ class OptimizationConfig(BaseSettings):
 
 class MonitoringConfig(BaseSettings):
     """
-    Конфигурация мониторинга и наблюдаемости
+    Configuration monitoring and observability
     """
     
-    # === Логирование ===
-    log_level: LogLevel = Field(default=LogLevel.INFO, description="Уровень логирования")
-    log_format: str = Field(default="json", description="Формат логов")
-    log_file: Optional[str] = Field(default=None, description="Файл логов")
+    # === Logging ===
+    log_level: LogLevel = Field(default=LogLevel.INFO, description="Level logging")
+    log_format: str = Field(default="json", description="Format logs")
+    log_file: Optional[str] = Field(default=None, description="File logs")
     
-    # === Метрики ===
-    metrics_enabled: bool = Field(default=True, description="Включить метрики")
-    metrics_port: PositiveInt = Field(default=9090, description="Порт метрик")
+    # === Metrics ===
+    metrics_enabled: bool = Field(default=True, description="Enable metrics")
+    metrics_port: PositiveInt = Field(default=9090, description="Port metrics")
     
     # === Health checks ===
-    health_check_enabled: bool = Field(default=True, description="Включить health checks")
-    health_check_interval: PositiveInt = Field(default=30, description="Интервал проверки")
+    health_check_enabled: bool = Field(default=True, description="Enable health checks")
+    health_check_interval: PositiveInt = Field(default=30, description="Interval validation")
     
     # === Tracing ===
-    tracing_enabled: bool = Field(default=False, description="Включить tracing")
-    tracing_endpoint: Optional[str] = Field(default=None, description="Endpoint трейсинга")
+    tracing_enabled: bool = Field(default=False, description="Enable tracing")
+    tracing_endpoint: Optional[str] = Field(default=None, description="Endpoint tracing")
     
     class Config:
         env_prefix = "PROPHET_MONITORING_"
@@ -374,38 +374,38 @@ class MonitoringConfig(BaseSettings):
 
 class ProphetConfig(BaseSettings):
     """
-    Главная конфигурация Prophet forecasting системы
+    Main configuration Prophet forecasting system
     
-    Объединяет все аспекты конфигурации с enterprise patterns
+    Combines all aspects configuration with enterprise patterns
     """
     
-    # === Общие настройки ===
+    # === General settings ===
     environment: Literal["development", "staging", "production"] = Field(
         default="development",
-        description="Среда выполнения"
+        description="Environment execution"
     )
     
     service_name: str = Field(
         default="prophet-forecasting",
-        description="Имя сервиса"
+        description="Name service"
     )
     
     version: str = Field(
         default="5.0.0",
-        description="Версия сервиса"
+        description="Version service"
     )
     
-    # === Компоненты конфигурации ===
+    # === Components configuration ===
     model: ModelConfig = Field(default_factory=ModelConfig)
     data: DataConfig = Field(default_factory=DataConfig)
     api: APIConfig = Field(default_factory=APIConfig)
     optimization: OptimizationConfig = Field(default_factory=OptimizationConfig)
     monitoring: MonitoringConfig = Field(default_factory=MonitoringConfig)
     
-    # === База данных ===
+    # === Database data ===
     database_url: str = Field(
         default="postgresql://user:pass@localhost:5432/prophet_db",
-        description="URL базы данных"
+        description="URL base data"
     )
     
     redis_url: str = Field(
@@ -416,22 +416,22 @@ class ProphetConfig(BaseSettings):
     # === Paths ===
     models_dir: Path = Field(
         default=Path("./models"),
-        description="Директория моделей"
+        description="Directory models"
     )
     
     data_dir: Path = Field(
         default=Path("./data"),
-        description="Директория данных"
+        description="Directory data"
     )
     
     logs_dir: Path = Field(
         default=Path("./logs"),
-        description="Директория логов"
+        description="Directory logs"
     )
     
     @root_validator
     def validate_paths(cls, values):
-        """Создать директории если не существуют"""
+        """Create directory if not exist"""
         for path_key in ["models_dir", "data_dir", "logs_dir"]:
             if path_key in values:
                 path = values[path_key]
@@ -443,41 +443,41 @@ class ProphetConfig(BaseSettings):
     
     @validator("database_url", "redis_url")
     def validate_urls(cls, v):
-        """Базовая валидация URL"""
+        """Base validation URL"""
         if not v or not isinstance(v, str):
             raise ValueError("URL must be a non-empty string")
         return v
     
     def get_model_config_for_crypto(self, symbol: str) -> ModelConfig:
         """
-        Получить конфигурацию модели для конкретной криптовалюты
+        Get configuration model for specific cryptocurrency
         
         Args:
-            symbol: Символ криптовалюты
+            symbol: Symbol cryptocurrency
             
         Returns:
-            Специализированная конфигурация модели
+            Specialized configuration model
         """
         config = self.model.copy()
         
-        # Адаптация параметров для разных криптовалют
+        # Adaptation parameters for different cryptocurrencies
         if symbol.upper() in ["BTC", "ETH"]:
-            # Для крупных криптовалют - больше гибкости
+            # For large cryptocurrencies - more flexibility
             config.changepoint_prior_scale = 0.1
             config.n_changepoints = 35
         elif symbol.upper() in ["DOGE", "SHIB"]:
-            # Для мем-коинов - больше сезонности
+            # For meme-coins - more seasonality
             config.seasonality_prior_scale = 15.0
             config.daily_seasonality = True
         
         return config
     
     def is_production(self) -> bool:
-        """Проверить production среду"""
+        """Check production environment"""
         return self.environment == "production"
     
     def is_development(self) -> bool:
-        """Проверить development среду"""
+        """Check development environment"""
         return self.environment == "development"
     
     class Config:
@@ -485,19 +485,19 @@ class ProphetConfig(BaseSettings):
         env_file_encoding = "utf-8"
         case_sensitive = False
         validate_all = True
-        extra = "forbid"  # Запретить лишние поля
+        extra = "forbid"  # Prohibit excess fields
 
 
-# Глобальная конфигурация
+# Global configuration
 _config: Optional[ProphetConfig] = None
 
 
 def get_config() -> ProphetConfig:
     """
-    Получить глобальную конфигурацию (singleton pattern)
+    Get global configuration (singleton pattern)
     
     Returns:
-        Экземпляр ProphetConfig
+        Instance ProphetConfig
     """
     global _config
     if _config is None:
@@ -507,26 +507,26 @@ def get_config() -> ProphetConfig:
 
 def reload_config() -> ProphetConfig:
     """
-    Перезагрузить конфигурацию
+    Restart configuration
     
     Returns:
-        Новый экземпляр ProphetConfig
+        New instance ProphetConfig
     """
     global _config
     _config = ProphetConfig()
     return _config
 
 
-# Вспомогательные функции
+# Helper function
 def load_config_from_file(config_path: Union[str, Path]) -> ProphetConfig:
     """
-    Загрузить конфигурацию из файла
+    Load configuration from file
     
     Args:
-        config_path: Путь к файлу конфигурации
+        config_path: Path to file configuration
         
     Returns:
-        Экземпляр ProphetConfig
+        Instance ProphetConfig
     """
     import yaml
     
@@ -542,11 +542,11 @@ def load_config_from_file(config_path: Union[str, Path]) -> ProphetConfig:
 
 def save_config_to_file(config: ProphetConfig, config_path: Union[str, Path]) -> None:
     """
-    Сохранить конфигурацию в файл
+    Save configuration in file
     
     Args:
-        config: Экземпляр конфигурации
-        config_path: Путь для сохранения
+        config: Instance configuration
+        config_path: Path for saving
     """
     import yaml
     
