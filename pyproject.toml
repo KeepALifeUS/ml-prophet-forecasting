@@ -3,11 +3,11 @@ requires = ["setuptools>=61.0", "wheel", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ctb3-ml-prophet-forecasting"
+name = "ml-prophet-forecasting"
 version = "5.0.0"
 description = "Enterprise-grade Prophet Forecasting System for Cryptocurrency Predictions with enterprise patterns"
 authors = [
-    {name = "CTB3 Team", email = "team@ctb3.ai"}
+    {name = "ML Team", email = "team@example.com"}
 ]
 license = {text = "MIT"}
 readme = "README.md"
@@ -106,10 +106,10 @@ gpu = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/ctb3/ml-prophet-forecasting"
-Documentation = "https://ctb3.readthedocs.io/ml-prophet-forecasting/"
-Repository = "https://github.com/ctb3/ml-prophet-forecasting"
-"Bug Tracker" = "https://github.com/ctb3/ml-prophet-forecasting/issues"
+Homepage = "https://github.com/KeepALifeUS"
+Documentation = "https://example.com"
+Repository = "https://github.com/KeepALifeUS"
+"Bug Tracker" = "https://github.com/KeepALifeUS"
 
 [project.scripts]
 prophet-forecast = "ml_prophet_forecasting.cli:main"
@@ -122,7 +122,7 @@ where = ["src"]
 [tool.setuptools.package-data]
 "ml_prophet_forecasting" = ["config/*.yaml", "models/*.pkl"]
 
-# Качество кода
+# Code quality
 [tool.black]
 line-length = 88
 target-version = ['py39', 'py310', 'py311']
